@@ -669,3 +669,17 @@ The comparison report includes:
 - **Slippage ticks robustness** — worst/median PnL at 0, 1, 2, 5 ticks slippage (if grid results present)
 
 Data is extracted from `archives/latest/Actual_*.zip` — no T-Bank API call needed.
+
+---
+
+## Deployment
+
+The project is deployed to `/opt/hammertrade` on a Yandex Cloud VM.
+
+- Copy `.env.example` to `.env` on the server and fill in `READONLY_TOKEN` — never commit `.env`
+- The server uses a read-only token for paper/research only
+- Real orders and sandbox orders are not implemented
+- See `docs/deploy_yandex_server.md` for full setup instructions
+
+**Known TLS issue**: T-Bank API returns a self-signed certificate on the server's network.
+Do not bypass this with `curl -k`, `verify=False`, or by installing the Russian Trusted Root CA.
