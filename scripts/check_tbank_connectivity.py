@@ -6,6 +6,9 @@ import ssl
 import sys
 from pathlib import Path
 
+# Ensure project root is in path when running as a script
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 HOST = "invest-public-api.tbank.ru"
 PORT = 443
 
