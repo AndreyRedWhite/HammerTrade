@@ -38,21 +38,23 @@ def _check_sdk(ca_bundle: str | None) -> tuple[bool, str]:
         return None, "READONLY_TOKEN not found, skipping SDK check."
 
     try:
-        import grpc
-        from tinkoff.invest import Client, InstrumentIdType
+        import t_tech.invest  # noqa: F401
     except ImportError:
-        return None, "tinkoff-investments not installed, skipping SDK check."
-
-    creds_kwargs = {}
-    if ca_bundle:
-        creds_kwargs["root_certificates"] = Path(ca_bundle).read_bytes()
+        return None, (
+            "t-tech-investments not installed, skipping SDK check. "
+            "Install with: pip install t-tech-investments "
+            "--extra-index-url https://opensource.tbank.ru/api/v4/projects/238/packages/pypi/simple"
+        )
 
     try:
-        ssl_creds = grpc.ssl_channel_credentials(**creds_kwargs)
-        with Client(token, ssl_channel_credentials=ssl_creds) as client:
+        from src.tbank.settings import load_tbank_settings
+        from src.tbank.client import get_tbank_client
+
+        settings = load_tbank_settings("prod")
+        with get_tbank_client(settings) as client:
             resp = client.instruments.find_instrument(query="SiM6")
         found = len(resp.instruments) > 0
-        detail = f"Found {len(resp.instruments)} instrument(s) for 'SiM6'" if found else "No instruments found for 'SiM6'"
+        detail = f"find_instrument('SiM6') → {len(resp.instruments)} result(s)"
         return found, detail
     except Exception as e:
         return False, str(e)

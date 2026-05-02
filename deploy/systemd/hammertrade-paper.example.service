@@ -1,5 +1,5 @@
 [Unit]
-Description=HammerTrade Paper Trader
+Description=HammerTrade Paper Trader — SiM6 SELL (no real orders)
 After=network-online.target
 Wants=network-online.target
 
@@ -7,10 +7,16 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/opt/hammertrade
 EnvironmentFile=/opt/hammertrade/.env
-ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py --ticker SiM6 --class-code SPBFUT --timeframe 1m --profile balanced --direction-filter SELL
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker SiM6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --profile balanced \
+    --direction-filter SELL \
+    --env prod
 Restart=always
 RestartSec=10
-User=hammertrade
+User=andrey
 
 [Install]
 WantedBy=multi-user.target

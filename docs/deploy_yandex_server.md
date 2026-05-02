@@ -132,3 +132,40 @@ rm /opt/hammertrade/certs/tbank-combined-ca.pem
 - Do not use `verify=False` or `curl -k`.
 - Do not store a live trading token on the server at this stage.
 - `.env` is never committed.
+
+## Paper trading daemon
+
+Verify connectivity before starting:
+
+```bash
+cd /opt/hammertrade
+source .venv/bin/activate
+set -a; source .env; set +a
+python scripts/check_tbank_connectivity.py --ca-bundle /opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+Smoke tests:
+
+```bash
+python scripts/run_paper_trader.py --once --dry-run
+python scripts/run_paper_trader.py --once
+python scripts/paper_report.py --state-db data/paper/paper_state.sqlite --output reports/paper_report_SiM6_SELL.md
+```
+
+Install as systemd service:
+
+```bash
+sudo cp deploy/systemd/hammertrade-paper.example.service /etc/systemd/system/hammertrade-paper.service
+sudo systemctl daemon-reload
+sudo systemctl enable hammertrade-paper
+sudo systemctl start hammertrade-paper
+sudo systemctl status hammertrade-paper
+journalctl -u hammertrade-paper -f
+```
+
+State and output:
+
+- SQLite state: `data/paper/paper_state.sqlite`
+- CSV trades: `out/paper/paper_trades_SiM6_SELL.csv`
+- Logs: `logs/paper_SiM6_SELL.log`
+- Reports: `reports/paper_report_SiM6_SELL.md`

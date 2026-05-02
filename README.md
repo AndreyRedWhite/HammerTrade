@@ -706,3 +706,42 @@ GRPC_DEFAULT_SSL_ROOTS_FILE_PATH=/opt/hammertrade/certs/tbank-combined-ca.pem
 
 See `docs/deploy_yandex_server.md` for full instructions.
 The `deploy/systemd/hammertrade-paper.example.service` is a template for a future paper trading daemon (not yet implemented).
+
+---
+
+## Paper trading
+
+Paper trading mode executes the HammerDetector strategy on live market data and tracks
+virtual trades — no real or sandbox orders are placed. Uses `READONLY_TOKEN` only.
+
+- State is stored in SQLite: `data/paper/paper_state.sqlite`
+- One virtual trade at a time per ticker/timeframe/profile/direction
+- Resistant to restarts (idempotent per candle timestamp)
+
+**Dry-run (no DB writes):**
+
+```bash
+python scripts/run_paper_trader.py --once --dry-run
+```
+
+**One real paper-cycle:**
+
+```bash
+python scripts/run_paper_trader.py --once
+```
+
+**Continuous (for systemd):**
+
+```bash
+python scripts/run_paper_trader.py --ticker SiM6 --direction-filter SELL
+```
+
+**Generate report:**
+
+```bash
+python scripts/paper_report.py --state-db data/paper/paper_state.sqlite --output reports/paper_report_SiM6_SELL.md
+```
+
+Logs: `logs/paper_SiM6_SELL.log`  
+Systemd template: `deploy/systemd/hammertrade-paper.example.service`  
+See `docs/deploy_yandex_server.md` for server setup.
