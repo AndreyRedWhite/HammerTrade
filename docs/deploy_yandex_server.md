@@ -59,16 +59,76 @@ pip install -r requirements.txt
 curl -v https://invest-public-api.tbank.ru 2>&1 | grep -E "(SSL|certificate|error)"
 ```
 
-**Known issue**: as of 2026-05-02, T-Bank API returns a self-signed certificate in the chain
-on this server's network. This means live API calls (candle loading, instrument specs) will
-fail with SSL errors. Research/backtest/analysis that does not call T-Bank API works normally.
+Or via Python:
 
-Do not work around this by installing Russian Trusted Root CA, disabling TLS verification,
-or using `curl -k`. If the TLS issue needs to be resolved, contact the hosting provider.
+```bash
+cd /opt/hammertrade
+source .venv/bin/activate
+python scripts/check_tbank_connectivity.py
+```
+
+## Isolated CA bundle for T-Bank API
+
+The server's network routes T-Bank API through Russian Trusted Root CA. To enable API calls
+without modifying the system trust store, create an isolated CA bundle for the HammerTrade
+process only.
+
+1. Place the Russian Trusted Root CA file:
+
+```
+/opt/hammertrade/certs/russian-trusted-root-ca.crt
+```
+
+2. Build the combined CA bundle:
+
+```bash
+cd /opt/hammertrade
+bash scripts/build_tbank_ca_bundle.sh \
+  --russian-root-ca /opt/hammertrade/certs/russian-trusted-root-ca.crt \
+  --output /opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+3. Add to `/opt/hammertrade/.env`:
+
+```env
+GRPC_DEFAULT_SSL_ROOTS_FILE_PATH=/opt/hammertrade/certs/tbank-combined-ca.pem
+SSL_CERT_FILE=/opt/hammertrade/certs/tbank-combined-ca.pem
+REQUESTS_CA_BUNDLE=/opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+4. Verify connectivity:
+
+```bash
+cd /opt/hammertrade
+source .venv/bin/activate
+set -a; source .env; set +a
+python scripts/check_tbank_connectivity.py \
+  --ca-bundle /opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+Expected: `Result: PASS`
+
+5. Rollback:
+
+```bash
+rm /opt/hammertrade/certs/tbank-combined-ca.pem
+# Remove GRPC_DEFAULT_SSL_ROOTS_FILE_PATH / SSL_CERT_FILE / REQUESTS_CA_BUNDLE from .env
+```
+
+> **Important**: This setup intentionally trusts Russian Trusted Root CA only for the
+> HammerTrade process through an isolated CA bundle.
+>
+> Do not install this CA globally with `update-ca-certificates`.
+>
+> Do not use this server for personal browsing, email, password managers, or unrelated services.
+>
+> At the current stage store only `READONLY_TOKEN` for paper/research. Sandbox token may be
+> added later only when sandbox orders are implemented.
 
 ## Security
 
-- Do not install Russian Trusted Root CA.
+- Do not install Russian Trusted Root CA globally.
 - Do not disable TLS verification.
-- Do not store a live trading token on the server.
+- Do not use `verify=False` or `curl -k`.
+- Do not store a live trading token on the server at this stage.
 - `.env` is never committed.

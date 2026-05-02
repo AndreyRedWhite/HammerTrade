@@ -1,0 +1,16 @@
+[Unit]
+Description=HammerTrade Paper Trader
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py --ticker SiM6 --class-code SPBFUT --timeframe 1m --profile balanced --direction-filter SELL
+Restart=always
+RestartSec=10
+User=hammertrade
+
+[Install]
+WantedBy=multi-user.target

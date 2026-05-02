@@ -683,3 +683,26 @@ The project is deployed to `/opt/hammertrade` on a Yandex Cloud VM.
 
 **Known TLS issue**: T-Bank API returns a self-signed certificate on the server's network.
 Do not bypass this with `curl -k`, `verify=False`, or by installing the Russian Trusted Root CA.
+
+### T-Bank TLS on some Russian networks
+
+Some Russian networks/clouds serve the T-Bank API certificate chain via Russian Trusted Root CA.
+
+HammerTrade does not install this CA globally and does not disable TLS verification.
+
+If needed, create an isolated CA bundle and point only the HammerTrade process to it:
+
+```bash
+bash scripts/build_tbank_ca_bundle.sh \
+  --russian-root-ca /opt/hammertrade/certs/russian-trusted-root-ca.crt \
+  --output /opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+Then in `.env`:
+
+```
+GRPC_DEFAULT_SSL_ROOTS_FILE_PATH=/opt/hammertrade/certs/tbank-combined-ca.pem
+```
+
+See `docs/deploy_yandex_server.md` for full instructions.
+The `deploy/systemd/hammertrade-paper.example.service` is a template for a future paper trading daemon (not yet implemented).

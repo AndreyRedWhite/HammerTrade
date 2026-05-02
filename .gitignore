@@ -59,5 +59,12 @@ htmlcov/
 *.bak
 .ipynb_checkpoints/
 
+# ─── Local CA bundles (never commit real certificates) ───────────────────────
+certs/*.pem
+certs/*.crt
+certs/*.cer
+!certs/README.md
+!certs/.gitkeep
+
 # ─── Claude Code session data ─────────────────────────────────────────────────
 .claude/
