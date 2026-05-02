@@ -1,0 +1,63 @@
+# ─── Secrets & SSH keys ──────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+ya_keys
+ya_keys.pub
+*.pem
+*.key
+id_rsa
+id_ed25519
+*.pub
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# ─── Virtual environments ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# ─── Runtime outputs (re-generatable) ────────────────────────────────────────
+data/raw/
+data/paper/
+out/
+reports/
+archives/
+logs/
+
+# ─── Instruments cache (re-fetchable from T-Bank) ────────────────────────────
+data/instruments/*.csv
+
+# ─── Test / coverage ─────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+*.tmp
+*.bak
+.ipynb_checkpoints/
+
+# ─── Claude Code session data ─────────────────────────────────────────────────
+.claude/

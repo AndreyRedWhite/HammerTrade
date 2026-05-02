@@ -1,0 +1,1014 @@
+(HammerTrade) Andrey.Vorontsov@macbookpro HammerTrade % python scripts/scan_liquid_futures.py \
+  --from 2026-03-01 \
+  --to 2026-04-10 \
+  --class-code SPBFUT \
+  --timeframe 1m \
+  --sample-days 5 \
+  --top 20 \
+  --env prod \
+  --output data/instruments/liquid_futures_2026-03-01_2026-04-10.csv \
+  --report-output reports/liquid_futures_2026-03-01_2026-04-10.md
+Fetching futures list for SPBFUT...
+Found 2503 futures total
+Active in period: 529
+Estimating liquidity (sample_days=5)...
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 7b177a8a-742c-4938-8c00-70ea094a8a6a 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 0c562647-752a-443b-a566-46d42c1fe0a3 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 7a7b59af-d1ea-4a18-aecc-436ebb57d1e9 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for fea7427d-c997-4389-993a-679957c2b086 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for c4950d2e-103e-4401-8044-efb34b5e9b68 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 691d928e-ae2d-4ce6-88e9-dd8ac5aa9af2 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 035fc8f1-9cfa-472b-9af3-71cae581f67e 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for d87bfcba-3f97-4474-ad69-b9f52d4173d1 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 82dc4c78-089a-46c0-8bab-7c011a00a820 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 49b78586-abdc-4806-884f-54c01a19f91e 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 48534f52-aad7-42fc-ba3d-06107d56c746 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for ff5f68f5-9016-4558-b77b-b296bb26fc93 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 92117c50-cb94-4b36-a423-e18f12145692 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 5e1c63e5-949b-47b0-9e6b-a435216e8d5e 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 07732265-7d47-403f-961b-54088d707571 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 7ecaa3bb-4a07-4e7f-9455-93a60875538c 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for f257f750-07e5-4c6d-a8ec-3cefd167e912 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 83e459b9-bdd2-4244-93ab-c599ba03b171 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 42bae6e9-26eb-436f-b17b-88325855d8cc 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 39a5b14b-a94d-4050-ad08-c779059d9287 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for f7c1ac55-b203-4bcf-83fb-4d83121e658d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 45025413-da4d-4464-8ba1-7dc2a8d31897 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for bb760fea-c593-4004-a691-80c87388bc80 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 9bdc1fcb-ba3a-4197-a4dd-189cd1fc5160 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for dad6c660-3183-4139-95ae-33d6d539392b 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 87c002e9-4907-4dc3-9a3e-27d36011eb02 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 943b789f-37d7-4417-8daa-c67e5e85a83f 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 4765f73d-71c0-499a-9546-f4545dab2ce6 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 70d976f5-f6ab-4484-9049-bbd003687ae9 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for ed11ab8b-896c-4af0-ac68-ab40ae049669 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 37513971-5406-47a6-a172-cd781b43bc10 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 920a4445-70d0-451f-b79e-d4132452b662 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 5c3c23d3-7a39-4477-8827-4e374b343c9b 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 869b4ebd-96d0-4e15-8312-b77c0ac59450 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for d27431df-7e77-4a7a-9a5a-fbf21688464d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for af8f3d05-be9f-4e17-88da-9b291d8cb427 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 3dd11e20-7b44-49db-bbee-e542b58f0791 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 8bfe25ca-91b5-41de-a715-85256c6aba4b 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 79d04ddb-fd1a-4226-8e88-3a38174da947 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 61ad5b00-7db9-42f5-a74b-7f04b2dff432 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=32, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 697e1023-c440-4e91-9e90-6e426ae570c9 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 6b2805fd-9619-451f-821f-a27f8aaba3d2 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 4f37f16d-5c8c-4c63-861c-465fc52ee403 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 7c2e0378-1be3-4817-8d18-e5b7d2f4d21d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for bb9d4801-9e06-45ff-8728-97dc8fa34415 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 5f6a15dc-00be-4b8b-a4af-88de7ad87f15 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 8644937a-4b06-4710-8b9f-7085d893f95d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 75ae795b-e89f-4ce8-8b67-e1cc76b07a42 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 5c7227d9-3c94-45b2-898b-64f838a20a2e 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for cc157dd5-27fd-4465-8e85-4079c87c6990 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for cfe380ae-8cb2-4a0b-b329-b55f40b60e72 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 6fd0fe7e-574c-449e-9865-27799fa71a26 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 117a1408-431f-4ba0-a041-5bba3123d4a8 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=31, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for a58c0c32-3466-489e-b55d-f80a0ab6f460 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for cb430e33-e752-4fc2-b1ef-06001a840bc7 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 4826b5b3-80b5-4373-8b86-fd50899716d3 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 4bc48dfb-3b94-42af-b135-7949a49e16ca 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for e889c757-ce26-46b1-a908-2565fd5e134a 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for b61f3a31-fd5d-48bf-9de3-00c013d7e8e3 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for d2abd825-f8d7-4475-9956-649305cf88bd 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for dc1ffa30-70a4-4a7b-807a-4f31c2951f7e 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 61ef86a5-336a-4add-80d9-0f374766336b 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for af949721-f3df-442c-aabd-86cde2ddc292 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for d51cb67d-1277-4102-97b8-665a6e436177 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 8a2d1817-e4e2-4f61-ad04-5c363a6d2917 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 0e6ed16e-327f-495d-b74b-97f4c7cd6272 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for d0135149-31fa-465d-ad62-c1886299ec45 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=30, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for f92350e4-f5b1-4646-853d-a70b0ee3d12c 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 6b83b777-59d3-422c-ab18-23e94d03afde 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for b601a79d-e82e-4038-9459-4df285fb1b38 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for c041e10a-4534-4a47-9c77-e3581d0b85f4 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for ce46d283-7108-4c41-bc3c-9addc420d095 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 80c59aaf-cf53-4d35-b2b3-d5bc3ee59586 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 37e1f203-35ca-4869-9029-d77e433c219a 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 3e092eed-aead-4ead-8b87-f360c5064ea8 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 217fef46-6c36-461e-8ad7-63812f5ba279 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 470a1b51-dbdb-4534-90f0-1a14e63e9f2a 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 1dc32b06-8ded-442a-818f-eb3649090f4d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 409684ad-8b1d-4899-807c-104c352b5cb7 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for af035fa4-4978-41a9-97c7-f17d00cd3bd5 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for aa51b27c-4d92-4b4c-81ee-7e55e246564d 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 1385a6f4-cddc-453a-b673-374a370bf542 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=29, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 4391d047-ba98-46ca-93e7-498f72779aa3 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for c908b853-eef2-4bb7-8dd9-69341d3a6f46 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 0993d2a7-4df0-445b-b3cf-5d25e6634d2a 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for 49bea593-bec8-475a-9756-4965a13e1eab 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-08T00:00:00+00:00 - 2026-04-09T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-09T00:00:00+00:00 - 2026-04-10T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:127: UserWarning: No candles returned for c7524add-790b-46f4-be49-bb0bab2df93b 2026-04-05T00:00:00+00:00 — 2026-04-10T00:00:00+00:00 [1m]
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-05T00:00:00+00:00 - 2026-04-06T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-06T00:00:00+00:00 - 2026-04-07T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+None GetCandles RESOURCE_EXHAUSTED
+/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py:121: UserWarning: Failed to fetch chunk 2026-04-07T00:00:00+00:00 - 2026-04-08T00:00:00+00:00: (<StatusCode.RESOURCE_EXHAUSTED: (8, 'resource exhausted')>, '', Metadata(tracking_id=None, ratelimit_limit='600, 600;w=60', ratelimit_remaining=0, ratelimit_reset=28, message=None))
+  warnings.warn(
+^CTraceback (most recent call last):
+  File "/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/scripts/scan_liquid_futures.py", line 96, in <module>
+    main()
+    ~~~~^^
+  File "/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/scripts/scan_liquid_futures.py", line 56, in main
+    liquidity_df = estimate_futures_liquidity(
+        client=client,
+    ...<4 lines>...
+        sample_days=args.sample_days,
+    )
+  File "/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/liquidity_universe.py", line 143, in estimate_futures_liquidity
+    candles_df = fetch_historical_candles(
+        client=client,
+    ...<3 lines>...
+        timeframe=timeframe,
+    )
+  File "/Users/Andrey.Vorontsov/PycharmProjects/HammerTrade/src/tbank/candles.py", line 112, in fetch_historical_candles
+    resp = client.market_data.get_candles(
+        instrument_id=instrument_uid,
+    ...<2 lines>...
+        interval=interval,
+    )
+  File "/Users/Andrey.Vorontsov/venvs/HammerTrade/lib/python3.13/site-packages/t_tech/invest/_errors.py", line 24, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/Andrey.Vorontsov/venvs/HammerTrade/lib/python3.13/site-packages/t_tech/invest/services.py", line 1095, in get_candles
+    response, call = self.stub.GetCandles.with_call(
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        request=_grpc_helpers.dataclass_to_protobuff(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        metadata=self.metadata,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/Andrey.Vorontsov/venvs/HammerTrade/lib/python3.13/site-packages/grpc/_channel.py", line 1170, in with_call
+    state, call = self._blocking(
+                  ~~~~~~~~~~~~~~^
+        request, timeout, metadata, credentials, wait_for_ready, compression
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/Andrey.Vorontsov/venvs/HammerTrade/lib/python3.13/site-packages/grpc/_channel.py", line 1143, in _blocking
+    event = call.next_event()
+  File "src/python/grpcio/grpc/_cython/_cygrpc/channel.pyx.pxi", line 388, in grpc._cython.cygrpc.SegregatedCall.next_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/channel.pyx.pxi", line 211, in grpc._cython.cygrpc._next_call_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/channel.pyx.pxi", line 205, in grpc._cython.cygrpc._next_call_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/completion_queue.pyx.pxi", line 97, in grpc._cython.cygrpc._latent_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/completion_queue.pyx.pxi", line 81, in grpc._cython.cygrpc._internal_latent_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/completion_queue.pyx.pxi", line 77, in grpc._cython.cygrpc._interpret_event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/tag.pyx.pxi", line 71, in grpc._cython.cygrpc._BatchOperationTag.event
+  File "src/python/grpcio/grpc/_cython/_cygrpc/operation.pyx.pxi", line 209, in grpc._cython.cygrpc.ReceiveStatusOnClientOperation.un_c
+  File "src/python/grpcio/grpc/_cython/_cygrpc/metadata.pyx.pxi", line 69, in grpc._cython.cygrpc._metadata
+  File "src/python/grpcio/grpc/_cython/_cygrpc/metadata.pyx.pxi", line 70, in genexpr
+  File "src/python/grpcio/grpc/_cython/_cygrpc/metadata.pyx.pxi", line 64, in grpc._cython.cygrpc._metadatum
+  File "<string>", line 1, in <lambda>
+KeyboardInterrupt
+
+(HammerTrade) Andrey.Vorontsov@ma
