@@ -1,0 +1,19 @@
+timezone: Europe/Moscow
+
+weekday_sessions:
+  - name: morning
+    start: "09:00"
+    end: "10:00"
+  - name: main
+    start: "10:00"
+    end: "19:00"
+  - name: evening
+    start: "19:00"
+    end: "23:50"
+
+weekend_sessions:
+  - name: weekend
+    start: "10:00"
+    end: "19:00"
+
+stale_candle_grace_minutes: 3

@@ -61,10 +61,11 @@ def test_dry_run_does_not_write_state(tmp_path):
             slippage_ticks=1.0, contracts=1, lookback_candles=300,
             trades_output=str(tmp_path / "trades.csv"),
             env="prod", dry_run=True, once=True,
+            ignore_market_hours=True, api_timeout_sec=10,
         )
         import logging
         logger = logging.getLogger("test")
-        _run_cycle(args, None, logger)
+        _run_cycle(args, None, logger, None, None, {"empty_fetches": 0, "api_errors": 0})
 
     assert not db.exists()
 
@@ -86,8 +87,9 @@ def test_api_error_does_not_crash(tmp_path):
         slippage_ticks=1.0, contracts=1, lookback_candles=300,
         trades_output=str(tmp_path / "trades.csv"),
         env="prod", dry_run=False, once=True,
+        ignore_market_hours=True, api_timeout_sec=10,
     )
     logger = logging.getLogger("test")
 
     with patch("src.paper.market_data.fetch_recent_candles", side_effect=ConnectionError("timeout")):
-        _run_cycle(args, repo, logger)  # should not raise
+        _run_cycle(args, repo, logger, None, None, {"empty_fetches": 0, "api_errors": 0})  # should not raise

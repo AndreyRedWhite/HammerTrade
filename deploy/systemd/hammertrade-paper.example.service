@@ -13,7 +13,10 @@ ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
     --timeframe 1m \
     --profile balanced \
     --direction-filter SELL \
-    --env prod
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10 \
+    --status-file runtime/paper_status_SiM6_SELL.json
 Restart=always
 RestartSec=10
 User=andrey
