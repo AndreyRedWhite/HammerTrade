@@ -27,11 +27,13 @@ def _build_ca_bundle() -> bytes:
     except Exception:
         pass  # certifi not available — grpc will use its own defaults
 
-    # Extra: user-supplied CA bundle (e.g. Russian Минцифры cert)
-    extra = os.getenv("TBANK_CA_BUNDLE", "").strip()
-    if extra and os.path.exists(extra):
-        with open(extra, "rb") as f:
-            parts.append(f.read())
+    # Extra: user-supplied CA bundle via GRPC_DEFAULT_SSL_ROOTS_FILE_PATH or SSL_CERT_FILE
+    for env_var in ("GRPC_DEFAULT_SSL_ROOTS_FILE_PATH", "SSL_CERT_FILE", "TBANK_CA_BUNDLE"):
+        extra = os.getenv(env_var, "").strip()
+        if extra and os.path.exists(extra):
+            with open(extra, "rb") as f:
+                parts.append(f.read())
+            break
 
     return b"\n".join(parts) if parts else b""
 
