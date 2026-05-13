@@ -1,0 +1,54 @@
+experiment:
+  name: "mvp20_diagnostic_filters_sim6_sell"
+  ticker: "SiM6"
+  class_code: "SPBFUT"
+  timeframe: "1m"
+  profile: "balanced"
+  direction: "SELL"
+
+data:
+  prefer_existing_raw: true
+  signals_csv: "out/debug_simple_all.csv"
+
+date_range:
+  from: "2026-01-15"
+  to: "2026-04-09"
+
+execution:
+  take_r: 1.0
+  slippage_points: 0.0
+  stop_buffer_points: 0.0
+  point_value_rub: 10.0
+  commission_per_trade: 0.025
+  contracts: 1
+  entry_horizon_bars: 3
+  default_max_hold_bars: 30
+  allow_overlap: false
+
+filters:
+  min_reward_points: [0, 5, 6, 8]
+  min_rr: [0.0, 0.8, 0.9]
+  max_hold_bars: [null, 3, 5, 10]
+  time_filter:
+    - name: "all_hours"
+      include_hours_msk: null
+      exclude_hours_msk: []
+    - name: "exclude_bad_paper_hours"
+      include_hours_msk: null
+      exclude_hours_msk: [12, 13, 19, 21]
+    - name: "only_good_paper_hours"
+      include_hours_msk: [10, 15, 18, 20, 22]
+      exclude_hours_msk: []
+  entry_confirmation:
+    - "baseline"
+    - "next_candle_direction"
+    - "breakout_confirmation"
+
+phase_b:
+  min_reward_points: [0, 5, 6]
+  min_rr: [0.0, 0.8]
+  time_filter: ["all_hours", "exclude_bad_paper_hours"]
+
+reporting:
+  top_n: 10
+  min_trades_required: 30
