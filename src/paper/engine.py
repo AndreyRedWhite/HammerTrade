@@ -24,7 +24,7 @@ def process_candle(
     direction_filter: str,
     entry_mode: str = "breakout",
     entry_horizon_bars: int = 3,
-    max_hold_bars: int = 30,
+    max_hold_bars: Optional[int] = None,
     take_r: float = 1.0,
     stop_buffer_points: float = 0.0,
     slippage_ticks: float = 1.0,
@@ -36,6 +36,7 @@ def process_candle(
     class_code: str = "",
     timeframe: str = "",
     profile: str = "",
+    experiment_name: str = "",
 ) -> tuple[Optional[PaperTrade], Optional[dict], list[str]]:
     """Process one newly closed candle.
 
@@ -47,6 +48,7 @@ def process_candle(
     """
     effective_slippage = slippage_ticks * tick_size
     commission_rub = commission_per_trade * 2 * contracts
+    log_prefix = f"[{experiment_name}] " if experiment_name else ""
     logs: list[str] = []
     candle_ts = pd.Timestamp(candle["timestamp"])
     is_signal = bool(candle.get("is_signal", False)) and str(candle.get("fail_reason", "")) == "pass"
@@ -67,7 +69,7 @@ def process_candle(
             stop_hit = float(candle["high"]) >= open_trade.stop_price
             take_hit = float(candle["low"]) <= open_trade.take_price
 
-        timeout = open_trade.bars_held >= max_hold_bars
+        timeout = max_hold_bars is not None and open_trade.bars_held >= max_hold_bars
 
         if stop_hit and take_hit:
             exit_price_raw = open_trade.stop_price
@@ -80,9 +82,12 @@ def process_candle(
             reason = PaperExitReason.TAKE
         elif timeout:
             exit_price_raw = float(candle["close"])
-            reason = PaperExitReason.TIMEOUT
+            reason = PaperExitReason.MAX_HOLD_EXIT
         else:
-            logs.append(f"  trade {open_trade.trade_id} still open, bars_held={open_trade.bars_held}")
+            logs.append(
+                f"  {log_prefix}trade {open_trade.trade_id} still open, "
+                f"bars_held={open_trade.bars_held}"
+            )
             return open_trade, pending_signal, logs
 
         # Apply exit slippage (BUY: sell worse → lower; SELL: buy to close → higher)
@@ -103,9 +108,10 @@ def process_candle(
         open_trade.pnl_points = round(gross_points, 6)
         open_trade.pnl_rub = round(net_pnl_rub, 2)
 
+        hold_info = f" bars_held={open_trade.bars_held}" if reason == PaperExitReason.MAX_HOLD_EXIT else ""
         logs.append(
-            f"  CLOSE trade {open_trade.trade_id}: "
-            f"reason={reason.value}, exit={exit_price:.4f}, pnl={net_pnl_rub:.2f} RUB"
+            f"  {log_prefix}CLOSE trade {open_trade.trade_id}: "
+            f"reason={reason.value}{hold_info}, exit={exit_price:.4f}, pnl={net_pnl_rub:.2f} RUB"
         )
         return open_trade, None, logs  # clear pending signal on exit too
 

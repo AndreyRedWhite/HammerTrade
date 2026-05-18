@@ -162,7 +162,7 @@ def test_timeout_closes_trade():
     candle = _candle(ts="2026-01-01 10:05:00", high=91, low=88, close=90)
     trade, pending, logs = process_candle(candle, open_trade, None, **_BASE_PARAMS)
     assert trade.status == PaperTradeStatus.CLOSED
-    assert trade.exit_reason == PaperExitReason.TIMEOUT
+    assert trade.exit_reason == PaperExitReason.MAX_HOLD_EXIT
 
 
 # ── PnL calculation ───────────────────────────────────────────────────────────

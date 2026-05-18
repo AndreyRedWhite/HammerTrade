@@ -1,0 +1,30 @@
+[Unit]
+Description=HammerTrade Paper Trader — SiM6 SELL maxhold5 experiment (no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker SiM6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --profile balanced \
+    --direction-filter SELL \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10 \
+    --max-hold-bars 5 \
+    --state-db data/paper/paper_state_maxhold5.sqlite \
+    --status-file runtime/paper_status_SiM6_SELL_maxhold5.json \
+    --trades-output out/paper/paper_trades_SiM6_SELL_maxhold5.csv \
+    --log-file logs/paper_SiM6_SELL_maxhold5.log \
+    --experiment-name maxhold5
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

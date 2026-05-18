@@ -12,7 +12,8 @@ class PaperTradeStatus(str, Enum):
 class PaperExitReason(str, Enum):
     STOP = "STOP"
     TAKE = "TAKE"
-    TIMEOUT = "TIMEOUT"
+    MAX_HOLD_EXIT = "MAX_HOLD_EXIT"
+    TIMEOUT = "TIMEOUT"       # legacy alias kept for backward compat
     MANUAL = "MANUAL"
     END_OF_DATA = "END_OF_DATA"
 

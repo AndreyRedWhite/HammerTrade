@@ -28,6 +28,8 @@ def main() -> None:
     p.add_argument("--to", dest="to_date", default=None, metavar="YYYY-MM-DD")
     p.add_argument("--reports-dir", default="reports")
     p.add_argument("--out-dir", default="out/paper")
+    p.add_argument("--experiment-name", default="",
+                   help="Optional experiment label appended to output file names")
     args = p.parse_args()
 
     result = run_diagnostics(
@@ -41,6 +43,8 @@ def main() -> None:
 
     ts = _ts_suffix()
     slug = f"{args.ticker}_{args.direction}"
+    if args.experiment_name:
+        slug = f"{slug}_{args.experiment_name}"
 
     reports_dir = Path(args.reports_dir)
     out_dir = Path(args.out_dir)
