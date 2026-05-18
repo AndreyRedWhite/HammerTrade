@@ -38,7 +38,8 @@ def _parse_args():
     p.add_argument("--direction-filter", default="SELL")
     p.add_argument("--entry-mode", default="breakout")
     p.add_argument("--take-r", type=float, default=1.0)
-    p.add_argument("--max-hold-bars", type=int, default=30)
+    p.add_argument("--max-hold-bars", type=int, default=None,
+                   help="Exit open trade after N bars if no stop/take (None = disabled)")
     p.add_argument("--stop-buffer-points", type=float, default=0.0)
     p.add_argument("--slippage-ticks", type=float, default=1.0)
     p.add_argument("--contracts", type=int, default=1)
@@ -61,13 +62,18 @@ def _parse_args():
                    help="Timeout for T-Bank candle fetch API call in seconds")
     p.add_argument("--status-file", default=None,
                    help="Path to JSON status file (default: runtime/paper_status_{ticker}_{direction}.json)")
+    p.add_argument("--experiment-name", default="",
+                   help="Optional experiment label (used in logs and output file names)")
+    p.add_argument("--csv-output", default=None,
+                   help="Override --trades-output CSV path (alias for backward compat)")
     return p.parse_args()
 
 
-def _setup_logging(log_file: str, dry_run: bool) -> logging.Logger:
-    logger = logging.getLogger("paper_trader")
+def _setup_logging(log_file: str, dry_run: bool, experiment_name: str = "") -> logging.Logger:
+    label = f"[{experiment_name}]" if experiment_name else "[baseline]"
+    logger = logging.getLogger(f"paper_trader.{experiment_name or 'baseline'}")
     logger.setLevel(logging.INFO)
-    fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    fmt = logging.Formatter(f"%(asctime)s %(levelname)s {label} %(message)s")
     if not logger.handlers:
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(fmt)
@@ -138,6 +144,11 @@ def _export_csv(repo: PaperRepository, output_path: str, ticker: str):
     pd.DataFrame(rows).to_csv(output_path, index=False)
 
 
+def _is_empty_candles_error(exc: Exception) -> bool:
+    """Return True if the exception represents an empty/missing candles response."""
+    return isinstance(exc, pd.errors.EmptyDataError) or "No columns to parse from file" in str(exc)
+
+
 def _fetch_with_timeout(ticker, class_code, timeframe, lookback_candles, env, timeout_sec):
     """Fetch candles with a thread-based timeout. Returns (df, tick_size) or raises."""
     from src.paper.market_data import fetch_recent_candles
@@ -173,6 +184,11 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             consecutive_empty_fetches=cycle_state.get("empty_fetches", 0),
             consecutive_api_errors=cycle_state.get("api_errors", 0),
             last_error=last_error,
+            empty_response_count=cycle_state.get("empty_responses", 0),
+            consecutive_empty_responses=cycle_state.get("consecutive_empty_responses", 0),
+            last_empty_response_at=cycle_state.get("last_empty_response_at"),
+            last_empty_response_message=cycle_state.get("last_empty_response_message"),
+            last_successful_fetch_at=cycle_state.get("last_successful_fetch_at"),
         )
 
     # ── Market hours guard ───────────────────────────────────────────────────
@@ -206,6 +222,8 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             args.api_timeout_sec,
         )
         cycle_state["api_errors"] = 0
+        cycle_state["consecutive_empty_responses"] = 0
+        cycle_state["last_successful_fetch_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     except concurrent.futures.TimeoutError:
         cycle_state["api_errors"] = cycle_state.get("api_errors", 0) + 1
         msg = f"API_TIMEOUT ticker={ticker} timeout_sec={args.api_timeout_sec} operation=fetch_recent_candles"
@@ -216,13 +234,31 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             )))
         return
     except Exception as e:
-        cycle_state["api_errors"] = cycle_state.get("api_errors", 0) + 1
-        msg = f"API_ERROR ticker={ticker} error={e}"
-        logger.error(msg)
-        if sw:
-            sw.write(build_status(**_common_status_kwargs(
-                "API_ERROR", session=session, market_open=market_open, last_error=str(e)
-            )))
+        if _is_empty_candles_error(e):
+            cycle_state["empty_responses"] = cycle_state.get("empty_responses", 0) + 1
+            cycle_state["consecutive_empty_responses"] = cycle_state.get("consecutive_empty_responses", 0) + 1
+            cycle_state["last_empty_response_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            cycle_state["last_empty_response_message"] = "No columns to parse from file"
+            consec = cycle_state["consecutive_empty_responses"]
+            total = cycle_state["empty_responses"]
+            logger.warning(
+                f"EMPTY_CANDLES_RESPONSE ticker={ticker} timeframe={timeframe} "
+                f"consecutive={consec} total={total} "
+                f'message="No columns to parse from file"'
+            )
+            if sw:
+                sw.write(build_status(**_common_status_kwargs(
+                    "EMPTY_CANDLES_RESPONSE", session=session, market_open=market_open,
+                    last_error="No columns to parse from file",
+                )))
+        else:
+            cycle_state["api_errors"] = cycle_state.get("api_errors", 0) + 1
+            msg = f"API_ERROR ticker={ticker} error={e}"
+            logger.error(msg)
+            if sw:
+                sw.write(build_status(**_common_status_kwargs(
+                    "API_ERROR", session=session, market_open=market_open, last_error=str(e)
+                )))
         return
 
     # ── Empty / no candles ───────────────────────────────────────────────────
@@ -346,6 +382,7 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         class_code=class_code,
         timeframe=timeframe,
         profile=profile,
+        experiment_name=args.experiment_name,
     )
 
     for _, candle in new_candles.iterrows():
@@ -405,10 +442,15 @@ def main():
     if args.status_file is None:
         args.status_file = f"runtime/paper_status_{args.ticker}_{args.direction_filter.upper()}.json"
 
-    logger = _setup_logging(args.log_file, args.dry_run)
+    # --csv-output overrides --trades-output
+    if args.csv_output is not None:
+        args.trades_output = args.csv_output
 
+    logger = _setup_logging(args.log_file, args.dry_run, args.experiment_name)
+
+    exp_label = args.experiment_name or "baseline"
     logger.info("=" * 60)
-    logger.info("HammerTrade Paper Trader — PAPER MODE ONLY — NO REAL ORDERS")
+    logger.info(f"HammerTrade Paper Trader — PAPER MODE ONLY — NO REAL ORDERS — experiment={exp_label}")
     logger.info(f"  ticker={args.ticker} class_code={args.class_code}")
     logger.info(f"  timeframe={args.timeframe} profile={args.profile}")
     logger.info(f"  direction={args.direction_filter} entry_mode={args.entry_mode}")
@@ -416,6 +458,7 @@ def main():
     logger.info(f"  slippage_ticks={args.slippage_ticks} contracts={args.contracts}")
     logger.info(f"  poll_interval={args.poll_interval_seconds}s dry_run={args.dry_run}")
     logger.info(f"  api_timeout={args.api_timeout_sec}s status_file={args.status_file}")
+    logger.info(f"  state_db={args.state_db} trades_output={args.trades_output}")
 
     # Market hours config
     market_config = None
@@ -440,7 +483,15 @@ def main():
         repo = PaperRepository(args.state_db)
         repo.init_db()
 
-    cycle_state: dict = {"empty_fetches": 0, "api_errors": 0}
+    cycle_state: dict = {
+        "empty_fetches": 0,
+        "api_errors": 0,
+        "empty_responses": 0,
+        "consecutive_empty_responses": 0,
+        "last_empty_response_at": None,
+        "last_empty_response_message": None,
+        "last_successful_fetch_at": None,
+    }
 
     if args.once or args.dry_run:
         _run_cycle(args, repo, logger, market_config, sw, cycle_state)

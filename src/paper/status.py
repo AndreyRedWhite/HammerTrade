@@ -39,6 +39,12 @@ def build_status(
     consecutive_empty_fetches: int = 0,
     consecutive_api_errors: int = 0,
     last_error: Optional[str] = None,
+    # Empty-response counters (MVP-2.1a)
+    empty_response_count: int = 0,
+    consecutive_empty_responses: int = 0,
+    last_empty_response_at: Optional[str] = None,
+    last_empty_response_message: Optional[str] = None,
+    last_successful_fetch_at: Optional[str] = None,
 ) -> dict[str, Any]:
     now = datetime.now(tz=timezone.utc)
     from zoneinfo import ZoneInfo
@@ -67,5 +73,10 @@ def build_status(
         "consecutive_empty_fetches": consecutive_empty_fetches,
         "consecutive_api_errors": consecutive_api_errors,
         "last_error": last_error,
+        "empty_response_count": empty_response_count,
+        "consecutive_empty_responses": consecutive_empty_responses,
+        "last_empty_response_at": last_empty_response_at,
+        "last_empty_response_message": last_empty_response_message,
+        "last_successful_fetch_at": last_successful_fetch_at,
         "pid": os.getpid(),
     }

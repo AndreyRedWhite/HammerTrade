@@ -110,8 +110,13 @@ def main() -> int:
     print(f"  fetch      : {_fmt(status.get('last_fetch_status'))}")
     empty = status.get("consecutive_empty_fetches", 0)
     errors = status.get("consecutive_api_errors", 0)
+    empty_resp = status.get("consecutive_empty_responses", 0)
+    empty_total = status.get("empty_response_count", 0)
     if empty or errors:
         print(f"  counters   : empty_fetches={empty}  api_errors={errors}")
+    if empty_resp or empty_total:
+        last_at = status.get("last_empty_response_at") or "—"
+        print(f"  empty_resp : consecutive={empty_resp}  total={empty_total}  last={last_at}")
 
     # --- trade state ---
     print(f"  open trades: {status.get('open_trades', 0)}")
