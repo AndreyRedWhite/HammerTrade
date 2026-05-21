@@ -1,0 +1,89 @@
+experiment:
+  name: "mvp22_exit_time_filters_v2_sim6_sell"
+  ticker: "SiM6"
+  class_code: "SPBFUT"
+  timeframe: "1m"
+  profile: "balanced"
+  direction: "SELL"
+
+data:
+  signals_csv: "out/debug_simple_all.csv"
+
+date_range:
+  from: "2026-01-15"
+  to: "2026-04-09"
+
+execution:
+  take_r: 1.0
+  slippage_points: 0.0
+  stop_buffer_points: 0.0
+  point_value_rub: 10.0
+  commission_per_trade: 0.025
+  contracts: 1
+  entry_horizon_bars: 3
+  allow_overlap: false
+
+filters:
+  time_filters:
+    - name: "all_hours"
+      exclude_hours_msk: []
+    - name: "exclude_hour_12"
+      exclude_hours_msk: [12]
+    - name: "exclude_hours_12_19_21"
+      exclude_hours_msk: [12, 19, 21]
+    - name: "exclude_hours_12_13_19_21"
+      exclude_hours_msk: [12, 13, 19, 21]
+
+  max_hold:
+    - name: "no_max_hold"
+      max_hold_bars: null
+    - name: "max_hold_5"
+      max_hold_bars: 5
+    - name: "max_hold_10"
+      max_hold_bars: 10
+    - name: "max_hold_15"
+      max_hold_bars: 15
+
+  conditional_max_hold:
+    - name: "none"
+      enabled: false
+    - name: "hold5_exit_if_progress_lt_25pct"
+      enabled: true
+      check_bar: 5
+      min_progress_to_take_pct: 25
+    - name: "hold5_exit_if_progress_lt_50pct"
+      enabled: true
+      check_bar: 5
+      min_progress_to_take_pct: 50
+    - name: "hold5_exit_if_pnl_le_0"
+      enabled: true
+      check_bar: 5
+      max_pnl_points: 0
+    - name: "hold5_exit_if_pnl_lt_10pts"
+      enabled: true
+      check_bar: 5
+      max_pnl_points: 10
+
+  entry_confirmation:
+    - name: "baseline"
+    - name: "next_candle_direction"
+    - name: "breakout_confirmation"
+
+phase_b:
+  time_filters:
+    - "all_hours"
+    - "exclude_hour_12"
+  exit_rules:
+    - "no_max_hold"
+    - "max_hold_10"
+    - "max_hold_15"
+    - "hold5_exit_if_progress_lt_25pct"
+    - "hold5_exit_if_progress_lt_50pct"
+    - "hold5_exit_if_pnl_le_0"
+    - "hold5_exit_if_pnl_lt_10pts"
+  entry_confirmation:
+    - "baseline"
+
+reporting:
+  min_trades_required: 30
+  top_n: 20
