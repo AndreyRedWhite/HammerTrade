@@ -100,7 +100,7 @@ def _save_to_catalog(record: dict) -> None:
     os.makedirs(os.path.dirname(INSTRUMENTS_CSV), exist_ok=True)
 
     if os.path.exists(INSTRUMENTS_CSV):
-        df = pd.read_csv(INSTRUMENTS_CSV)
+        df = pd.read_csv(INSTRUMENTS_CSV, dtype=object)
     else:
         df = pd.DataFrame(columns=INSTRUMENTS_COLUMNS)
 
