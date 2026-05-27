@@ -171,7 +171,7 @@ def test_health_check_ok(tmp_path):
 
 def test_health_check_missing_file(tmp_path):
     result = _run_check(tmp_path=tmp_path)
-    assert result.returncode == 1
+    assert result.returncode == 2  # missing/unreadable => 2 (MVP-2.3a)
 
 
 def test_health_check_stale(tmp_path):

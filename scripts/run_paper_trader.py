@@ -158,6 +158,32 @@ def _fetch_with_timeout(ticker, class_code, timeframe, lookback_candles, env, ti
     return fut.result(timeout=timeout_sec)
 
 
+def _write_status(sw: Optional[StatusWriter], data: dict, cycle_state: dict, logger) -> None:
+    """Write status file and log liveness transitions."""
+    if sw:
+        sw.write(data)
+    new_liveness = data.get("trading_liveness_status", "OK")
+    prev_liveness = cycle_state.get("last_liveness_status", "OK")
+    if new_liveness != prev_liveness:
+        consecutive = data.get("consecutive_api_errors", 0)
+        minutes = data.get("minutes_since_last_successful_fetch")
+        min_str = f"{minutes:.0f}m" if minutes is not None else "N/A"
+        reason = data.get("trading_liveness_reason", "")
+        if new_liveness == "STALLED":
+            logger.error(
+                f"TRADING_LIVENESS_STALLED consecutive_api_errors={consecutive} "
+                f"last_successful_fetch={min_str} reason={reason}"
+            )
+        elif new_liveness == "DEGRADED":
+            logger.warning(
+                f"TRADING_LIVENESS_DEGRADED consecutive_api_errors={consecutive} "
+                f"last_successful_fetch={min_str} reason={reason}"
+            )
+        elif new_liveness == "OK" and prev_liveness != "OK":
+            logger.info(f"TRADING_LIVENESS_RECOVERED prev={prev_liveness}")
+        cycle_state["last_liveness_status"] = new_liveness
+
+
 def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cycle_state: dict):
     ticker = args.ticker
     class_code = args.class_code
@@ -189,6 +215,9 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             last_empty_response_at=cycle_state.get("last_empty_response_at"),
             last_empty_response_message=cycle_state.get("last_empty_response_message"),
             last_successful_fetch_at=cycle_state.get("last_successful_fetch_at"),
+            total_api_errors=cycle_state.get("total_api_errors", 0),
+            last_api_error_at=cycle_state.get("last_api_error_at"),
+            last_api_error_message=cycle_state.get("last_api_error_message"),
         )
 
     # ── Market hours guard ───────────────────────────────────────────────────
@@ -200,6 +229,12 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         market_open = is_session_open(now_utc, market_config)
         msk_time = to_market_timezone(now_utc, market_config)
 
+        # Reset last_successful_fetch_at on market open transition to avoid false alarms
+        prev_market_open = cycle_state.get("prev_market_open", None)
+        if market_open and prev_market_open is False:
+            cycle_state["last_successful_fetch_at"] = None
+        cycle_state["prev_market_open"] = market_open
+
         if not market_open:
             logger.info(
                 f"MARKET_CLOSED ticker={ticker} session={session} "
@@ -207,10 +242,9 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             )
             cycle_state["empty_fetches"] = 0
             cycle_state["api_errors"] = 0
-            if sw:
-                sw.write(build_status(**_common_status_kwargs(
-                    "MARKET_CLOSED", session=session, market_open=False
-                )))
+            _write_status(sw, build_status(**_common_status_kwargs(
+                "MARKET_CLOSED", session=session, market_open=False
+            )), cycle_state, logger)
             return
 
     # ── Fetch candles with timeout ───────────────────────────────────────────
@@ -226,12 +260,14 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         cycle_state["last_successful_fetch_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     except concurrent.futures.TimeoutError:
         cycle_state["api_errors"] = cycle_state.get("api_errors", 0) + 1
+        cycle_state["total_api_errors"] = cycle_state.get("total_api_errors", 0) + 1
+        cycle_state["last_api_error_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         msg = f"API_TIMEOUT ticker={ticker} timeout_sec={args.api_timeout_sec} operation=fetch_recent_candles"
+        cycle_state["last_api_error_message"] = msg
         logger.error(msg)
-        if sw:
-            sw.write(build_status(**_common_status_kwargs(
-                "API_TIMEOUT", session=session, market_open=market_open, last_error=msg
-            )))
+        _write_status(sw, build_status(**_common_status_kwargs(
+            "API_TIMEOUT", session=session, market_open=market_open, last_error=msg
+        )), cycle_state, logger)
         return
     except Exception as e:
         if _is_empty_candles_error(e):
@@ -246,19 +282,20 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
                 f"consecutive={consec} total={total} "
                 f'message="No columns to parse from file"'
             )
-            if sw:
-                sw.write(build_status(**_common_status_kwargs(
-                    "EMPTY_CANDLES_RESPONSE", session=session, market_open=market_open,
-                    last_error="No columns to parse from file",
-                )))
+            _write_status(sw, build_status(**_common_status_kwargs(
+                "EMPTY_CANDLES_RESPONSE", session=session, market_open=market_open,
+                last_error="No columns to parse from file",
+            )), cycle_state, logger)
         else:
             cycle_state["api_errors"] = cycle_state.get("api_errors", 0) + 1
+            cycle_state["total_api_errors"] = cycle_state.get("total_api_errors", 0) + 1
+            cycle_state["last_api_error_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            cycle_state["last_api_error_message"] = str(e)
             msg = f"API_ERROR ticker={ticker} error={e}"
             logger.error(msg)
-            if sw:
-                sw.write(build_status(**_common_status_kwargs(
-                    "API_ERROR", session=session, market_open=market_open, last_error=str(e)
-                )))
+            _write_status(sw, build_status(**_common_status_kwargs(
+                "API_ERROR", session=session, market_open=market_open, last_error=str(e)
+            )), cycle_state, logger)
         return
 
     # ── Empty / no candles ───────────────────────────────────────────────────
@@ -275,10 +312,9 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         else:
             logger.warning(f"NO_CANDLES ticker={ticker}")
             fetch_status = "NO_CANDLES"
-        if sw:
-            sw.write(build_status(**_common_status_kwargs(
-                fetch_status, session=session, market_open=market_open
-            )))
+        _write_status(sw, build_status(**_common_status_kwargs(
+            fetch_status, session=session, market_open=market_open
+        )), cycle_state, logger)
         return
 
     cycle_state["empty_fetches"] = 0
@@ -305,12 +341,11 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
                 f"now_msk={msk_now.isoformat()} "
                 f"max_age_minutes={grace}"
             )
-            if sw:
-                sw.write(build_status(**_common_status_kwargs(
-                    "STALE_CANDLES", session=session, market_open=True,
-                    last_candle_ts_utc=last_candle_ts_utc_str,
-                    last_candle_ts_msk=last_candle_ts_msk_str,
-                )))
+            _write_status(sw, build_status(**_common_status_kwargs(
+                "STALE_CANDLES", session=session, market_open=True,
+                last_candle_ts_utc=last_candle_ts_utc_str,
+                last_candle_ts_msk=last_candle_ts_msk_str,
+            )), cycle_state, logger)
             return
 
     # ── Params + detector ────────────────────────────────────────────────────
@@ -354,15 +389,14 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         logger.info("No new closed candles to process. Waiting...")
         open_trade = repo.get_open_trade(ticker, timeframe, profile, direction)
         pending = _load_pending_signal(repo, ticker, timeframe, profile, direction)
-        if sw:
-            sw.write(build_status(**_common_status_kwargs(
-                "OK", session=session, market_open=market_open,
-                last_candle_ts_utc=last_candle_ts_utc_str,
-                last_candle_ts_msk=last_candle_ts_msk_str,
-                last_processed=last_ts_str,
-                open_trades=1 if open_trade else 0,
-                pending=bool(pending),
-            )))
+        _write_status(sw, build_status(**_common_status_kwargs(
+            "OK", session=session, market_open=market_open,
+            last_candle_ts_utc=last_candle_ts_utc_str,
+            last_candle_ts_msk=last_candle_ts_msk_str,
+            last_processed=last_ts_str,
+            open_trades=1 if open_trade else 0,
+            pending=bool(pending),
+        )), cycle_state, logger)
         return
 
     logger.info(f"Processing {len(new_candles)} new candle(s).")
@@ -423,15 +457,14 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
 
     open_trade = repo.get_open_trade(ticker, timeframe, profile, direction)
     pending = _load_pending_signal(repo, ticker, timeframe, profile, direction)
-    if sw:
-        sw.write(build_status(**_common_status_kwargs(
-            "OK", session=session, market_open=market_open,
-            last_candle_ts_utc=last_candle_ts_utc_str,
-            last_candle_ts_msk=last_candle_ts_msk_str,
-            last_processed=str(new_candles["timestamp"].iloc[-1]),
-            open_trades=1 if open_trade else 0,
-            pending=bool(pending),
-        )))
+    _write_status(sw, build_status(**_common_status_kwargs(
+        "OK", session=session, market_open=market_open,
+        last_candle_ts_utc=last_candle_ts_utc_str,
+        last_candle_ts_msk=last_candle_ts_msk_str,
+        last_processed=str(new_candles["timestamp"].iloc[-1]),
+        open_trades=1 if open_trade else 0,
+        pending=bool(pending),
+    )), cycle_state, logger)
 
 
 def main():
@@ -491,6 +524,12 @@ def main():
         "last_empty_response_at": None,
         "last_empty_response_message": None,
         "last_successful_fetch_at": None,
+        # Liveness tracking (MVP-2.3a)
+        "total_api_errors": 0,
+        "last_api_error_at": None,
+        "last_api_error_message": None,
+        "prev_market_open": None,
+        "last_liveness_status": "OK",
     }
 
     if args.once or args.dry_run:

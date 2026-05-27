@@ -45,10 +45,33 @@ def build_status(
     last_empty_response_at: Optional[str] = None,
     last_empty_response_message: Optional[str] = None,
     last_successful_fetch_at: Optional[str] = None,
+    # Liveness fields (MVP-2.3a)
+    total_api_errors: int = 0,
+    last_api_error_at: Optional[str] = None,
+    last_api_error_message: Optional[str] = None,
 ) -> dict[str, Any]:
-    now = datetime.now(tz=timezone.utc)
+    from src.paper.liveness import compute_liveness
     from zoneinfo import ZoneInfo
+
+    now = datetime.now(tz=timezone.utc)
     msk = now.astimezone(ZoneInfo(market_timezone))
+
+    liveness_status, liveness_reason = compute_liveness(
+        is_market_open=market_open,
+        consecutive_api_errors=consecutive_api_errors,
+        consecutive_empty_responses=consecutive_empty_responses,
+        last_successful_fetch_at=last_successful_fetch_at,
+        now_utc=now,
+    )
+
+    minutes_since_fetch: Optional[float] = None
+    if last_successful_fetch_at:
+        try:
+            ts = datetime.fromisoformat(last_successful_fetch_at.replace("Z", "+00:00"))
+            minutes_since_fetch = round((now - ts).total_seconds() / 60, 1)
+        except (ValueError, TypeError):
+            pass
+
     return {
         "service": "hammertrade-paper",
         "mode": "paper",
@@ -78,5 +101,13 @@ def build_status(
         "last_empty_response_at": last_empty_response_at,
         "last_empty_response_message": last_empty_response_message,
         "last_successful_fetch_at": last_successful_fetch_at,
+        # Liveness fields (MVP-2.3a)
+        "trading_liveness_status": liveness_status,
+        "trading_liveness_reason": liveness_reason,
+        "total_api_errors": total_api_errors,
+        "last_api_error_at": last_api_error_at,
+        "last_api_error_message": last_api_error_message,
+        "minutes_since_last_successful_fetch": minutes_since_fetch,
+        "liveness_checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "pid": os.getpid(),
     }

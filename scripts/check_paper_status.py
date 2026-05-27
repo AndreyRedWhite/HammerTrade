@@ -2,15 +2,17 @@
 
 Reads the JSON status file written by run_paper_trader.py and outputs a
 human-readable summary.  Exit codes:
-  0 — daemon is alive and healthy
-  1 — status file missing or unreadable (daemon never started or crashed)
-  2 — daemon appears stale (no update in > --stale-threshold-sec seconds)
+  0 — trading liveness OK
+  1 — trading liveness DEGRADED
+  2 — trading liveness STALLED, status file missing/unreadable, or daemon stale
 """
 import argparse
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def _parse_args():
@@ -52,24 +54,36 @@ def _fmt(value) -> str:
     return str(value)
 
 
+def _compute_liveness_fallback(status: dict) -> tuple[str, str | None]:
+    """Compute liveness from raw fields when trading_liveness_status not present (old status files)."""
+    from src.paper.liveness import compute_liveness
+    return compute_liveness(
+        is_market_open=status.get("market_open", True),
+        consecutive_api_errors=status.get("consecutive_api_errors", 0),
+        consecutive_empty_responses=status.get("consecutive_empty_responses", 0),
+        last_successful_fetch_at=status.get("last_successful_fetch_at"),
+    )
+
+
 def main() -> int:
     args = _parse_args()
     path = Path(args.status_file)
 
     if not path.exists():
         print(f"MISSING  status file not found: {path}", file=sys.stderr)
-        return 1
+        return 2
 
     try:
         status = _load_status(path)
     except (json.JSONDecodeError, OSError) as exc:
         print(f"ERROR  cannot read status file: {exc}", file=sys.stderr)
-        return 1
+        return 2
 
     if args.json:
         print(json.dumps(status, indent=2))
         return 0
 
+    # --- Age check ---
     last_cycle = status.get("last_cycle_at_utc", "")
     age: float | None = None
     if last_cycle:
@@ -80,21 +94,31 @@ def main() -> int:
 
     stale = age is not None and age > args.stale_threshold_sec
 
-    # --- header line ---
-    state_label = "STALE" if stale else "OK"
-    if status.get("last_error"):
-        state_label = "WARN" if not stale else "STALE+ERR"
+    # --- Liveness status ---
+    if "trading_liveness_status" in status:
+        liveness = status["trading_liveness_status"]
+        liveness_reason = status.get("trading_liveness_reason")
+    else:
+        liveness, liveness_reason = _compute_liveness_fallback(status)
 
+    if stale:
+        # Stale daemon overrides to STALLED regardless
+        liveness = "STALLED"
+        liveness_reason = f"daemon_stale_{age:.0f}s"
+
+    # --- Header line ---
     ticker = status.get("ticker", "?")
     direction = status.get("direction", "?")
-    print(f"[{state_label}]  {ticker} {direction}  pid={_fmt(status.get('pid'))}")
+    pid = _fmt(status.get("pid"))
+    reason_str = f" ({liveness_reason})" if liveness_reason else ""
+    print(f"[{liveness}]{reason_str}  {ticker} {direction}  pid={pid}")
 
-    # --- timing ---
+    # --- Timing ---
     age_str = f"{age:.0f}s ago" if age is not None else "unknown"
     print(f"  last cycle : {_fmt(last_cycle)}  ({age_str})")
     print(f"  last candle: {_fmt(status.get('last_candle_ts_msk'))} (MSK)")
 
-    # --- market state ---
+    # --- Market state ---
     market_open = status.get("market_open")
     session = status.get("session", "?")
     mh_enabled = status.get("market_hours_enabled", True)
@@ -106,34 +130,50 @@ def main() -> int:
         market_label = f"CLOSED  session={session}"
     print(f"  market     : {market_label}")
 
-    # --- fetch status ---
-    print(f"  fetch      : {_fmt(status.get('last_fetch_status'))}")
-    empty = status.get("consecutive_empty_fetches", 0)
-    errors = status.get("consecutive_api_errors", 0)
+    # --- Liveness details ---
+    last_ok_fetch = _fmt(status.get("last_successful_fetch_at"))
+    minutes_since = status.get("minutes_since_last_successful_fetch")
+    minutes_str = f"{minutes_since:.0f}m ago" if minutes_since is not None else "—"
+    print(f"  liveness   : {liveness}  fetch={_fmt(status.get('last_fetch_status'))}")
+    print(f"  last ok    : {last_ok_fetch}  ({minutes_str})")
+
+    # --- Error counters ---
+    consecutive_err = status.get("consecutive_api_errors", 0)
+    total_err = status.get("total_api_errors", 0)
+    empty_fetches = status.get("consecutive_empty_fetches", 0)
+    if consecutive_err or total_err or empty_fetches:
+        print(f"  api_errors : consecutive={consecutive_err}  total={total_err}  empty_fetches={empty_fetches}")
+    last_err_at = status.get("last_api_error_at")
+    if last_err_at:
+        print(f"  last err @ : {last_err_at}")
+
+    # --- Empty response counters ---
     empty_resp = status.get("consecutive_empty_responses", 0)
     empty_total = status.get("empty_response_count", 0)
-    if empty or errors:
-        print(f"  counters   : empty_fetches={empty}  api_errors={errors}")
     if empty_resp or empty_total:
         last_at = status.get("last_empty_response_at") or "—"
         print(f"  empty_resp : consecutive={empty_resp}  total={empty_total}  last={last_at}")
 
-    # --- trade state ---
+    # --- Trade state ---
     print(f"  open trades: {status.get('open_trades', 0)}")
     print(f"  pending sig: {status.get('pending_signal', False)}")
 
-    # --- error ---
+    # --- Last error message ---
     if status.get("last_error"):
         print(f"  last_error : {status['last_error']}")
 
+    # --- Stale warning ---
     if stale:
         print(
             f"\n  WARNING: last cycle was {age:.0f}s ago "
             f"(threshold={args.stale_threshold_sec}s)",
             file=sys.stderr,
         )
-        return 2
 
+    if liveness == "STALLED":
+        return 2
+    if liveness == "DEGRADED":
+        return 1
     return 0
 
 
