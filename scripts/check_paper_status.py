@@ -62,6 +62,7 @@ def _compute_liveness_fallback(status: dict) -> tuple[str, str | None]:
         consecutive_api_errors=status.get("consecutive_api_errors", 0),
         consecutive_empty_responses=status.get("consecutive_empty_responses", 0),
         last_successful_fetch_at=status.get("last_successful_fetch_at"),
+        market_open_since=status.get("market_open_since"),
     )
 
 

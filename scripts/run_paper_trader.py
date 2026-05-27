@@ -218,6 +218,7 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
             total_api_errors=cycle_state.get("total_api_errors", 0),
             last_api_error_at=cycle_state.get("last_api_error_at"),
             last_api_error_message=cycle_state.get("last_api_error_message"),
+            market_open_since=cycle_state.get("market_open_at"),
         )
 
     # ── Market hours guard ───────────────────────────────────────────────────
@@ -229,10 +230,18 @@ def _run_cycle(args, repo, logger, market_config, sw: Optional[StatusWriter], cy
         market_open = is_session_open(now_utc, market_config)
         msk_time = to_market_timezone(now_utc, market_config)
 
-        # Reset last_successful_fetch_at on market open transition to avoid false alarms
+        # Track market open timestamp; reset last_successful_fetch_at on open transition
         prev_market_open = cycle_state.get("prev_market_open", None)
-        if market_open and prev_market_open is False:
-            cycle_state["last_successful_fetch_at"] = None
+        if market_open:
+            if prev_market_open is False:
+                # Market just transitioned from closed to open
+                cycle_state["last_successful_fetch_at"] = None
+                cycle_state["market_open_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            elif cycle_state.get("market_open_at") is None:
+                # Daemon started with market already open (restart scenario)
+                cycle_state["market_open_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        else:
+            cycle_state["market_open_at"] = None
         cycle_state["prev_market_open"] = market_open
 
         if not market_open:
@@ -529,6 +538,7 @@ def main():
         "last_api_error_at": None,
         "last_api_error_message": None,
         "prev_market_open": None,
+        "market_open_at": None,
         "last_liveness_status": "OK",
     }
 

@@ -49,6 +49,7 @@ def build_status(
     total_api_errors: int = 0,
     last_api_error_at: Optional[str] = None,
     last_api_error_message: Optional[str] = None,
+    market_open_since: Optional[str] = None,
 ) -> dict[str, Any]:
     from src.paper.liveness import compute_liveness
     from zoneinfo import ZoneInfo
@@ -61,6 +62,7 @@ def build_status(
         consecutive_api_errors=consecutive_api_errors,
         consecutive_empty_responses=consecutive_empty_responses,
         last_successful_fetch_at=last_successful_fetch_at,
+        market_open_since=market_open_since,
         now_utc=now,
     )
 
@@ -104,6 +106,7 @@ def build_status(
         # Liveness fields (MVP-2.3a)
         "trading_liveness_status": liveness_status,
         "trading_liveness_reason": liveness_reason,
+        "market_open_since": market_open_since,
         "total_api_errors": total_api_errors,
         "last_api_error_at": last_api_error_at,
         "last_api_error_message": last_api_error_message,

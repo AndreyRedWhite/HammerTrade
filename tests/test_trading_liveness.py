@@ -14,6 +14,7 @@ from src.paper.liveness import (
     DEGRADED_AFTER_FETCH_MINUTES,
     STALLED_AFTER_FETCH_MINUTES,
     DEGRADED_AFTER_EMPTY_RESPONSES,
+    OPEN_MARKET_GRACE_MINUTES,
 )
 from src.paper.status import build_status
 
@@ -353,3 +354,83 @@ def test_minutes_since_fetch_in_status():
 def test_minutes_since_fetch_none_when_no_fetch():
     s = build_status(**_base_status(last_successful_fetch_at=None))
     assert s["minutes_since_last_successful_fetch"] is None
+
+
+# ── 21. Grace period: within OPEN_MARKET_GRACE_MINUTES → OK ──────────────────
+
+def test_grace_period_within_window():
+    """During grace period after market open, time-based checks are skipped."""
+    within_grace = _ts(OPEN_MARKET_GRACE_MINUTES - 1)
+    status, reason = compute_liveness(
+        is_market_open=True,
+        consecutive_api_errors=0,
+        last_successful_fetch_at=None,
+        market_open_since=within_grace,
+    )
+    assert status == "OK"
+
+
+# ── 22. After grace period expired → DEGRADED then STALLED ───────────────────
+
+def test_grace_period_expired_degraded():
+    """After grace + DEGRADED threshold, no fetch → DEGRADED."""
+    open_since = _ts(OPEN_MARKET_GRACE_MINUTES + DEGRADED_AFTER_FETCH_MINUTES + 1)
+    status, reason = compute_liveness(
+        is_market_open=True,
+        consecutive_api_errors=0,
+        last_successful_fetch_at=None,
+        market_open_since=open_since,
+    )
+    assert status == "DEGRADED"
+    assert "minutes_since_market_open_no_fetch" in reason
+
+
+def test_grace_period_expired_stalled():
+    """After grace + STALLED threshold, no fetch → STALLED."""
+    open_since = _ts(OPEN_MARKET_GRACE_MINUTES + STALLED_AFTER_FETCH_MINUTES + 1)
+    status, reason = compute_liveness(
+        is_market_open=True,
+        consecutive_api_errors=0,
+        last_successful_fetch_at=None,
+        market_open_since=open_since,
+    )
+    assert status == "STALLED"
+    assert "minutes_since_market_open_no_fetch" in reason
+
+
+# ── 23. market_open_since=None + last_successful_fetch_at=None → OK ──────────
+
+def test_both_none_skips_time_checks():
+    """No market_open_since info + no fetch → only error counters apply."""
+    status, reason = compute_liveness(
+        is_market_open=True,
+        consecutive_api_errors=0,
+        last_successful_fetch_at=None,
+        market_open_since=None,
+    )
+    assert status == "OK"
+
+
+# ── 24. market_open_since in build_status JSON ────────────────────────────────
+
+def test_market_open_since_in_build_status():
+    open_since = _ts(10)
+    s = build_status(**_base_status(
+        last_successful_fetch_at=None,
+        market_open_since=open_since,
+    ))
+    assert s["market_open_since"] == open_since
+
+
+# ── 25. Successful fetch resets concern despite expired grace ─────────────────
+
+def test_successful_fetch_overrides_grace_period():
+    """Once last_successful_fetch_at is set, market_open_since is irrelevant."""
+    open_since = _ts(OPEN_MARKET_GRACE_MINUTES + STALLED_AFTER_FETCH_MINUTES + 10)
+    status, reason = compute_liveness(
+        is_market_open=True,
+        consecutive_api_errors=0,
+        last_successful_fetch_at=_ts(1),  # recent successful fetch
+        market_open_since=open_since,
+    )
+    assert status == "OK"
