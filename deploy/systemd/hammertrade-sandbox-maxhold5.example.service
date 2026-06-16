@@ -1,0 +1,39 @@
+# EXAMPLE ONLY — DO NOT INSTALL OR ENABLE WITHOUT EXPLICIT APPROVAL.
+#
+# MVP-L1a sandbox order-placement runner — Hammer MaxHold5, SiU6 SELL.
+#
+# SANDBOX CONTOUR ONLY. Places orders via the T-Bank SandboxService using
+# SANDBOX_TOKEN / SANDBOX_ACCOUNT_ID from /opt/hammertrade/.env. Never live.
+# real_orders_enabled is hardcoded false in the config and the runner
+# hard-fails before any API call if mode/orders.environment is not "sandbox"
+# or if TINVEST_LIVE_TRADING_TOKEN is set.
+#
+# This service is independent of, and does NOT replace or modify, the
+# existing paper control group:
+#   hammertrade-paper-maxhold5.service
+# That service keeps running unchanged. Do not stop it when installing this
+# unit.
+#
+# To install (only after explicit approval):
+#   sudo cp deploy/systemd/hammertrade-sandbox-maxhold5.example.service \
+#       /etc/systemd/system/hammertrade-sandbox-maxhold5.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hammertrade-sandbox-maxhold5.service
+
+[Unit]
+Description=HammerTrade Sandbox Order Execution — Hammer MaxHold5 SiU6 SELL (T-Bank sandbox contour, never live)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_hammer_maxhold5_sandbox.py \
+    --config configs/sandbox/hammer_maxhold5_siu6.yaml
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

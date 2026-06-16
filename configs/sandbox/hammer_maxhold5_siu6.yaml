@@ -1,0 +1,78 @@
+# Sandbox order-placement config — Hammer MaxHold5, SiU6 SELL (MVP-L1a)
+#
+# This config drives scripts/run_hammer_maxhold5_sandbox.py, which places
+# orders against the T-BANK SANDBOX CONTOUR ONLY (T-Tech SandboxService),
+# using the SAME hammer-maxhold5 signal/entry/exit logic (max_hold_bars=5,
+# direction=SELL) as the existing paper control service
+# hammertrade-paper-maxhold5.service. That paper service is the control
+# group and is NOT changed or stopped by this config/runner.
+#
+# real_orders_enabled is hardcoded false for this MVP. The runner hard-fails
+# if mode/orders.environment is anything other than "sandbox", or if
+# real_orders_enabled is true.
+
+mode: sandbox
+strategy: hammer_maxhold5
+ticker: SiU6
+class_code: SPBFUT
+timeframe: 1m
+profile: balanced
+direction: SELL
+env: sandbox
+
+# Signal/entry/exit parameters — mirror hammertrade-paper-maxhold5.service
+# (configs/hammer_detector_balanced.env + --max-hold-bars 5). Do not change
+# without also updating the paper control service for comparability.
+params_file: configs/hammer_detector_balanced.env
+entry_mode: breakout
+entry_horizon_bars: 3
+take_r: 1.0
+stop_buffer_points: 0.0
+slippage_ticks: 1.0
+max_hold_bars: 5
+contracts: 1
+
+fetch:
+  lookback_candles: 300
+  api_timeout_sec: 10
+  poll_interval_seconds: 20
+
+session:
+  timezone: Europe/Moscow
+  market_hours_config: configs/market_hours/moex_futures.yaml
+
+orders:
+  enabled: true
+  environment: sandbox
+  real_orders_enabled: false
+  order_type: market
+  account_id_env: SANDBOX_ACCOUNT_ID
+  token_env: SANDBOX_TOKEN
+
+risk:
+  capital_budget_rub: 40000
+  max_position_notional_rub: 40000
+  max_order_notional_rub: 40000
+  max_daily_loss_rub: 3000
+  max_total_loss_rub: 10000
+  max_trades_per_day: 5
+  max_consecutive_errors: 3
+  max_consecutive_losses: 3
+  max_open_positions_per_strategy: 1
+  kill_switch_file: runtime/STOP_SANDBOX_TRADING
+  # Approximate margin requirement per SiU6 lot, used as the order/position
+  # "notional" for the limit checks above (futures are margined, so raw
+  # price * point_value is not a meaningful notional). Verify against the
+  # actual sandbox instrument margin on first sandbox order and adjust.
+  margin_per_lot_rub: 6000
+
+artifacts:
+  db: data/sandbox/sandbox_state_hammer_maxhold5_siu6.sqlite
+  status: runtime/sandbox_status_hammer_maxhold5_SiU6.json
+  trades_csv: out/sandbox/sandbox_trades_hammer_maxhold5_SiU6.csv
+  orders_csv: out/sandbox/sandbox_orders_hammer_maxhold5_SiU6.csv
+  log: logs/sandbox_hammer_maxhold5_SiU6.log
+
+# Paper control service this sandbox runner mirrors (read-only reference,
+# never started/stopped/modified by this runner).
+paper_control_service: hammertrade-paper-maxhold5.service
