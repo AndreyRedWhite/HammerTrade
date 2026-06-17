@@ -27,6 +27,11 @@ class RiskLimits:
     max_consecutive_losses: int
     max_open_positions_per_strategy: int
     kill_switch_file: str
+    # Cap on consecutive failed *exit* (closing) order attempts for one open
+    # position before the strategy pauses. Exits bypass check_pre_trade, so
+    # without this an unfillable close (e.g. sandbox "Not enough balance")
+    # would retry every cycle forever. Default mirrors max_consecutive_errors.
+    max_exit_retries: int = 3
 
 
 class RiskManager:
@@ -155,6 +160,23 @@ class RiskManager:
 
     def reset_errors(self, risk_state: SandboxRiskState) -> SandboxRiskState:
         risk_state.consecutive_errors = 0
+        return risk_state
+
+    def exit_retries_exhausted(self, risk_state: SandboxRiskState) -> bool:
+        """True once an open position has failed to close max_exit_retries times."""
+        return risk_state.exit_error_count >= self.limits.max_exit_retries
+
+    def record_exit_error(self, risk_state: SandboxRiskState) -> SandboxRiskState:
+        """Count one failed closing-order attempt; pause once the cap is hit."""
+        risk_state.exit_error_count += 1
+        if risk_state.exit_error_count >= self.limits.max_exit_retries:
+            risk_state.trading_paused = True
+            risk_state.trading_paused_reason = "max_exit_retries_exceeded"
+        return risk_state
+
+    def reset_exit_errors(self, risk_state: SandboxRiskState) -> SandboxRiskState:
+        """Clear the exit-retry counter (on a successful exit or a fresh entry)."""
+        risk_state.exit_error_count = 0
         return risk_state
 
     def mark_reconciliation_failed(self, risk_state: SandboxRiskState) -> SandboxRiskState:

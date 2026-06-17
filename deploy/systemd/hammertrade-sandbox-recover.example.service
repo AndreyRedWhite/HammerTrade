@@ -1,0 +1,31 @@
+# EXAMPLE ONLY — phase-2 one-shot recovery, fired a few minutes after the
+# close job (e.g. 09:15 MSK).
+#
+# SANDBOX CONTOUR ONLY (SANDBOX_TOKEN). Never live. Never touches the paper
+# services. May auto-fix and RESTART the sandbox daemon (via sudo -n
+# systemctl). Branch logic (see scripts/sandbox_postclose_recover.py and
+# docs/sandbox_recovery.md):
+#   - account FLAT -> reconcile DB + restart hammertrade-sandbox-maxhold5
+#   - still short  -> top up sandbox to TARGET_BALANCE, retry close, then
+#                     restart the daemon if FLAT
+# Requires passwordless sudo for `systemctl restart` for the service User.
+#
+# Install (rename without .example), then enable the timer:
+#   sudo cp deploy/systemd/hammertrade-sandbox-recover.example.service \
+#       /etc/systemd/system/hammertrade-sandbox-recover.service
+#   sudo cp deploy/systemd/hammertrade-sandbox-recover.example.timer \
+#       /etc/systemd/system/hammertrade-sandbox-recover.timer   # set the date first
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hammertrade-sandbox-recover.timer
+
+[Unit]
+Description=HammerTrade one-shot: sandbox SiU6 post-close recovery (top-up/retry/restart; T-Bank sandbox contour, NEVER live)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/sandbox_postclose_recover.py
+User=vorontsov

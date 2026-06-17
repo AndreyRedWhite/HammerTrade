@@ -310,6 +310,7 @@ def _build_context(cfg: dict, dry_run: bool, logger: logging.Logger) -> RunnerCo
         max_consecutive_losses=risk_cfg["max_consecutive_losses"],
         max_open_positions_per_strategy=risk_cfg["max_open_positions_per_strategy"],
         kill_switch_file=risk_cfg["kill_switch_file"],
+        max_exit_retries=risk_cfg.get("max_exit_retries", 3),
     )
 
     repo = None
@@ -526,6 +527,7 @@ def _handle_entry(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ri
     )
 
     ctx.risk_manager.reset_errors(risk_state)
+    ctx.risk_manager.reset_exit_errors(risk_state)
     repo.save_risk_state(risk_state)
     cycle_state["last_order_event_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     logger.info(f"ENTRY trade_id={trade.trade_id} order={order_id} status={order.status.value} qty={trade.qty}")
@@ -536,6 +538,29 @@ def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ris
     logger = ctx.logger
     ticker = ctx.ticker
     now_utc = datetime.now(tz=timezone.utc)
+
+    # Exit retry cap: exits bypass check_pre_trade, so an unfillable close
+    # (e.g. sandbox "Not enough balance") would otherwise retry every cycle
+    # forever. After max_exit_retries failures, pause and require manual
+    # intervention (close the position by hand, then reset state).
+    if ctx.risk_manager.exit_retries_exhausted(risk_state):
+        if not risk_state.trading_paused:
+            risk_state.trading_paused = True
+            risk_state.trading_paused_reason = "max_exit_retries_exceeded"
+            repo.save_risk_state(risk_state)
+        msg = (
+            f"EXIT_RETRIES_EXHAUSTED trade_id={trade.trade_id} "
+            f"exit_error_count={risk_state.exit_error_count} — position left OPEN, "
+            f"manual close required"
+        )
+        logger.error(msg)
+        repo.insert_event(
+            event_id=f"exit_retries_exhausted:{trade.trade_id}", ticker=ticker,
+            event_type="RISK_BLOCK", message=msg,
+        )
+        cycle_state["last_error_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        cycle_state["last_error_message"] = msg
+        return
 
     exit_side = "BUY" if trade.direction == "SELL" else "SELL"
     # internal_order_id (journal) vs broker idempotency key (UUID for the API).
@@ -571,6 +596,7 @@ def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ris
         order.status = SandboxOrderStatus.ERROR
         repo.insert_order(order)
         ctx.risk_manager.update_after_error(risk_state)
+        ctx.risk_manager.record_exit_error(risk_state)
         repo.save_risk_state(risk_state)
         msg = f"ORDER_ERROR exit trade_id={trade.trade_id} error={e}"
         logger.error(msg)
@@ -618,6 +644,7 @@ def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ris
 
     ctx.risk_manager.update_after_trade(risk_state, daily, trade.net_pnl_rub or 0.0)
     ctx.risk_manager.reset_errors(risk_state)
+    ctx.risk_manager.reset_exit_errors(risk_state)
     repo.save_risk_state(risk_state)
     repo.save_daily_risk(daily)
     cycle_state["last_order_event_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")

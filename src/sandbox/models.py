@@ -35,6 +35,7 @@ class SandboxExitReason(str, Enum):
     TAKE = "TAKE"
     MAX_HOLD_EXIT = "MAX_HOLD_EXIT"
     RISK_EXIT = "RISK_EXIT"
+    MANUAL_CLOSE = "MANUAL_CLOSE"  # operator-forced flatten, not a strategy exit
 
 
 class ReconciliationStatus(str, Enum):
@@ -142,6 +143,7 @@ class SandboxRiskState:
     total_pnl_rub: float = 0.0
     consecutive_errors: int = 0
     consecutive_losses: int = 0
+    exit_error_count: int = 0
     trading_paused: bool = False
     trading_paused_reason: Optional[str] = None
     reconciliation_status: str = ReconciliationStatus.OK.value

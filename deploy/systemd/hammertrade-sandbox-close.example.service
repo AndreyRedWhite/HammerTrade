@@ -1,0 +1,29 @@
+# EXAMPLE ONLY — one-shot manual close of a stuck sandbox position.
+#
+# SANDBOX CONTOUR ONLY (SANDBOX_TOKEN). Never live. Does NOT start the
+# hammertrade-sandbox-maxhold5.service daemon and does NOT touch the paper
+# services. Triggered by hammertrade-sandbox-close.example.timer. The
+# orchestrator backs up the DB, attempts a bounded close (MARKET + two
+# crossing LIMIT fallbacks), reconciles to FLAT only if the account is
+# actually flat, runs diagnostics, and writes reports/sandbox_manual_close_*.md.
+# See docs/sandbox_recovery.md.
+#
+# Install (rename without .example), then enable the timer:
+#   sudo cp deploy/systemd/hammertrade-sandbox-close.example.service \
+#       /etc/systemd/system/hammertrade-sandbox-close.service
+#   sudo cp deploy/systemd/hammertrade-sandbox-close.example.timer \
+#       /etc/systemd/system/hammertrade-sandbox-close.timer   # set the date first
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hammertrade-sandbox-close.timer
+
+[Unit]
+Description=HammerTrade one-shot: sandbox SiU6 manual close + report (T-Bank sandbox contour, NEVER live)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/sandbox_close_and_report.py
+User=vorontsov

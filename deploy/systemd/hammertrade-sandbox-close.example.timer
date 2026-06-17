@@ -1,0 +1,23 @@
+# EXAMPLE ONLY — one-shot timer for hammertrade-sandbox-close.service.
+#
+# A SPECIFIC calendar date makes this inherently one-shot: once the date
+# passes the timer can never fire again. Set OnCalendar to a date/time shortly
+# after the next MOEX FORTS open (09:00 MSK = 06:00 UTC; server TZ is UTC).
+# Example below targets 09:07 MSK. Edit the date before installing.
+#
+# After it has run, remove the units (see docs/sandbox_recovery.md):
+#   sudo systemctl disable --now hammertrade-sandbox-close.timer
+#   sudo rm /etc/systemd/system/hammertrade-sandbox-close.{timer,service}
+#   sudo systemctl daemon-reload
+
+[Unit]
+Description=One-shot timer: sandbox SiU6 manual close shortly after MOEX open
+
+[Timer]
+# UTC. Replace YYYY-MM-DD with the target trading day.
+OnCalendar=YYYY-MM-DD 06:07:00
+AccuracySec=30s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

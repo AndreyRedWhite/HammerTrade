@@ -1,0 +1,22 @@
+# EXAMPLE ONLY — one-shot timer for hammertrade-sandbox-recover.service.
+#
+# Fire a few minutes AFTER the close timer (so the close job has finished),
+# e.g. 09:15 MSK = 06:15 UTC. A specific calendar date => inherently one-shot.
+# Edit the date before installing.
+#
+# After it has run, clean up BOTH one-shot jobs (see docs/sandbox_recovery.md):
+#   sudo systemctl disable --now hammertrade-sandbox-recover.timer hammertrade-sandbox-close.timer
+#   sudo rm /etc/systemd/system/hammertrade-sandbox-{recover,close}.{timer,service}
+#   sudo systemctl daemon-reload
+
+[Unit]
+Description=One-shot timer: sandbox SiU6 post-close recovery
+
+[Timer]
+# UTC. Replace YYYY-MM-DD with the target trading day (same day as the close timer).
+OnCalendar=YYYY-MM-DD 06:15:00
+AccuracySec=30s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

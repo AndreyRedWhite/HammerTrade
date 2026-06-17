@@ -59,6 +59,10 @@ risk:
   max_consecutive_errors: 3
   max_consecutive_losses: 3
   max_open_positions_per_strategy: 1
+  # Consecutive failed closing-order attempts for one open position before the
+  # strategy pauses (exits bypass the pre-trade checks, so without this an
+  # unfillable close would retry every cycle forever).
+  max_exit_retries: 3
   kill_switch_file: runtime/STOP_SANDBOX_TRADING
   # Approximate margin requirement per SiU6 lot, used as the order/position
   # "notional" for the limit checks above (futures are margined, so raw

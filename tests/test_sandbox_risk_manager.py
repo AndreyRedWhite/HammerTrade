@@ -198,3 +198,38 @@ def test_mark_reconciliation_failed_and_ok(tmp_path):
 
     state = rm.mark_reconciliation_ok(state)
     assert state.reconciliation_status == ReconciliationStatus.OK.value
+
+
+def test_record_exit_error_pauses_after_cap(tmp_path):
+    rm = RiskManager(_limits(tmp_path, max_exit_retries=3))
+    state = _state()
+
+    state = rm.record_exit_error(state)
+    assert state.exit_error_count == 1
+    assert rm.exit_retries_exhausted(state) is False
+    assert state.trading_paused is False
+
+    state = rm.record_exit_error(state)
+    state = rm.record_exit_error(state)
+    assert state.exit_error_count == 3
+    assert rm.exit_retries_exhausted(state) is True
+    assert state.trading_paused is True
+    assert state.trading_paused_reason == "max_exit_retries_exceeded"
+
+
+def test_reset_exit_errors(tmp_path):
+    rm = RiskManager(_limits(tmp_path))
+    state = SandboxRiskState(exit_error_count=2)
+    state = rm.reset_exit_errors(state)
+    assert state.exit_error_count == 0
+
+
+def test_exit_error_count_independent_of_consecutive_errors(tmp_path):
+    # Exit retries must not be conflated with entry-side consecutive_errors.
+    rm = RiskManager(_limits(tmp_path, max_exit_retries=5, max_consecutive_errors=3))
+    state = _state()
+    for _ in range(4):
+        rm.record_exit_error(state)
+    assert state.exit_error_count == 4
+    assert state.consecutive_errors == 0
+    assert rm.exit_retries_exhausted(state) is False
