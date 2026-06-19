@@ -1,0 +1,22 @@
+# Example only. Do not install before rollover (SiM6 → SiU6, deadline 2026-06-10).
+# Do NOT run: systemctl enable/start hammertrade-paper-momentum
+# After rollover: copy to /etc/systemd/system/, run systemctl enable --now hammertrade-paper-momentum
+
+[Unit]
+Description=HammerTrade Paper Trader — Momentum Continuation SiU6 (no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python \
+    scripts/run_momentum_paper_trader.py \
+    --config configs/paper/momentum_continuation_siu6_paper_example.yaml
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

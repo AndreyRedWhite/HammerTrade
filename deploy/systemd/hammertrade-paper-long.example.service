@@ -1,0 +1,39 @@
+# HammerTrade Paper Trader — SiU6 hammer LONG-side experiment (BUY-only, no real orders).
+# Mirrors the baseline SELL service (hammertrade-paper.service) but with
+# --direction-filter BUY, to validate the long side live OOS. Separate DB/status/
+# CSV/log so the existing SELL control services are never touched. Paper only —
+# no orders, READONLY_TOKEN.
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-long.example.service /etc/systemd/system/hammertrade-paper-long.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-long
+
+[Unit]
+Description=HammerTrade Paper Trader — SiU6 hammer LONG (BUY-only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --profile balanced \
+    --direction-filter BUY \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10 \
+    --state-db data/paper/paper_state_siu6_long.sqlite \
+    --status-file runtime/paper_status_SiU6_LONG.json \
+    --trades-output out/paper/paper_trades_SiU6_LONG.csv \
+    --log-file logs/paper_SiU6_LONG.log \
+    --experiment-name long
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
