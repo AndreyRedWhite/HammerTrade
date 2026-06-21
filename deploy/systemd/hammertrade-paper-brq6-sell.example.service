@@ -1,0 +1,36 @@
+# HammerTrade Paper Trader — BRQ6 hammer SELL (no real orders, READONLY_TOKEN only).
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-brq6-sell.example.service /etc/systemd/system/hammertrade-paper-brq6-sell.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-brq6-sell
+
+[Unit]
+Description=HammerTrade Paper Trader — BRQ6 hammer SELL (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker BRQ6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --profile balanced \
+    --params configs/hammer_detector_brq6.env \
+    --direction-filter SELL \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10 \
+    --state-db data/paper/paper_state_brq6_sell.sqlite \
+    --status-file runtime/paper_status_BRQ6_SELL.json \
+    --trades-output out/paper/paper_trades_BRQ6_SELL.csv \
+    --log-file logs/paper_BRQ6_SELL.log \
+    --experiment-name brq6_sell
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

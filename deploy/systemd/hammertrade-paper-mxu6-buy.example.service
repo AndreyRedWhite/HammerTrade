@@ -1,0 +1,36 @@
+# HammerTrade Paper Trader — MXU6 hammer BUY (no real orders, READONLY_TOKEN only).
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-mxu6-buy.example.service /etc/systemd/system/hammertrade-paper-mxu6-buy.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-mxu6-buy
+
+[Unit]
+Description=HammerTrade Paper Trader — MXU6 hammer BUY (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker MXU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --profile balanced \
+    --params configs/hammer_detector_mxu6.env \
+    --direction-filter BUY \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10 \
+    --state-db data/paper/paper_state_mxu6_buy.sqlite \
+    --status-file runtime/paper_status_MXU6_BUY.json \
+    --trades-output out/paper/paper_trades_MXU6_BUY.csv \
+    --log-file logs/paper_MXU6_BUY.log \
+    --experiment-name mxu6_buy
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

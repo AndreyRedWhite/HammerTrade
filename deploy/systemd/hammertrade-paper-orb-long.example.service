@@ -1,0 +1,39 @@
+# HammerTrade Paper Trader — SiU6 ORB LONG (no real orders, READONLY_TOKEN only).
+# Complements the existing SHORT service (hammertrade-paper-orb.service).
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-orb-long.example.service /etc/systemd/system/hammertrade-paper-orb-long.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-orb-long
+
+[Unit]
+Description=HammerTrade Paper Trader — SiU6 ORB LONG (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orb_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --direction LONG \
+    --point-value-rub 10.0 \
+    --opening-range-start 10:00 \
+    --opening-range-end 11:00 \
+    --take-r 2.0 \
+    --state-db data/paper/paper_state_siu6_orb_long.sqlite \
+    --status-file runtime/paper_status_SiU6_ORB_LONG.json \
+    --csv-output out/paper/paper_trades_SiU6_ORB_LONG.csv \
+    --log-file logs/paper_SiU6_ORB_LONG.log \
+    --experiment-name orb_siu6_long \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
