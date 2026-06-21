@@ -1,0 +1,23 @@
+# HammerTrade Paper Trader — GDU6 Momentum Continuation (no real orders).
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-momentum-gdu6.example.service /etc/systemd/system/hammertrade-paper-momentum-gdu6.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-momentum-gdu6
+
+[Unit]
+Description=HammerTrade Paper Trader — GDU6 Momentum Continuation (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_momentum_paper_trader.py \
+    --config configs/paper/momentum_continuation_gdu6_paper.yaml
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

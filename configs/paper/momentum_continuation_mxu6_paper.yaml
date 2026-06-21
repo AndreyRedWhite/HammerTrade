@@ -1,0 +1,50 @@
+# Paper config — Momentum Continuation MXU6
+# Same signal params as SiU6 (MC_atr2.0_vol2.0_r2.0). All filters are dimensionless.
+
+experiment:
+  name: momentum_mxu6_mc_atr2_vol2_r2
+  strategy: momentum_continuation
+  ticker: MXU6
+  class_code: SPBFUT
+  timeframe: 1m
+  description: "Bearish impulse continuation SHORT on MXU6, atr_mult=2.0 vol_mult=2.0 take_r=2.0"
+
+signal:
+  direction: SHORT
+  atr_window: 14
+  atr_mult: 2.0
+  vol_window: 20
+  vol_mult: 2.0
+  close_near_low_pct: 0.25
+
+entry:
+  mode: close_of_signal_candle
+
+stop:
+  mode: signal_candle_high
+
+take:
+  take_r: 2.0
+
+exit:
+  time_exit_msk: "18:40"
+  max_trades_per_day: 1
+  no_overnight: true
+
+session:
+  timezone: Europe/Moscow
+  market_hours_config: configs/market_hours/moex_futures.yaml
+
+commission:
+  rub_per_trade: 0.05
+  point_value_rub: 1.0
+
+storage:
+  state_db: data/paper/paper_state_mxu6_momentum.sqlite
+  status_file: runtime/paper_status_MXU6_MOMENTUM.json
+  csv_output: out/paper/paper_trades_MXU6_MOMENTUM.csv
+  log_file: logs/paper_MXU6_MOMENTUM.log
+
+orders:
+  orders_enabled: false
+  paper_only: true

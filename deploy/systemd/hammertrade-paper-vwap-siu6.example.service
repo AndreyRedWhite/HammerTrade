@@ -1,0 +1,44 @@
+# HammerTrade Paper Trader — SiU6 VWAP Reversion SHORT (no real orders).
+# distance_mult=1.0, stop_mult=1.0, take_r=1.5 (scenario VR_d1_s1_1.5r)
+# Tracks both theoretical fill (signal close) and market fill (next open) for slippage.
+#
+# NOTE: VWAP Reversion edge was destroyed at >=2pt slippage in backtest.
+# Monitor avg_slippage_pts in status JSON — if consistently >1.5pt, strategy has no edge.
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-vwap-siu6.example.service /etc/systemd/system/hammertrade-paper-vwap-siu6.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-vwap-siu6
+
+[Unit]
+Description=HammerTrade Paper Trader — SiU6 VWAP Reversion SHORT (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_vwap_reversion_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --distance-mult 1.0 \
+    --stop-mult 1.0 \
+    --take-r 1.5 \
+    --atr-window 14 \
+    --max-trades-per-day 3 \
+    --point-value-rub 10.0 \
+    --state-db data/paper/paper_state_siu6_vwap_reversion.sqlite \
+    --status-file runtime/paper_status_SiU6_VWAP_REVERSION.json \
+    --csv-output out/paper/paper_trades_SiU6_VWAP_REVERSION.csv \
+    --log-file logs/paper_SiU6_VWAP_REVERSION.log \
+    --experiment-name vwap_siu6_d1_s1_r15 \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

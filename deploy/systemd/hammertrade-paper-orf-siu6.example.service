@@ -1,0 +1,40 @@
+# HammerTrade Paper Trader — SiU6 ORB Fade SHORT (no real orders).
+# Fades false breakouts above OR high. OR 10:00-11:00 MSK, n_return_bars=3, take=midpoint.
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-orf-siu6.example.service /etc/systemd/system/hammertrade-paper-orf-siu6.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-orf-siu6
+
+[Unit]
+Description=HammerTrade Paper Trader — SiU6 ORB Fade SHORT (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orf_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --opening-range-start 10:00 \
+    --opening-range-end 11:00 \
+    --n-return-bars 3 \
+    --take-mode midpoint \
+    --stop-buffer 1.0 \
+    --point-value-rub 10.0 \
+    --state-db data/paper/paper_state_siu6_orf.sqlite \
+    --status-file runtime/paper_status_SiU6_ORF.json \
+    --csv-output out/paper/paper_trades_SiU6_ORF.csv \
+    --log-file logs/paper_SiU6_ORF.log \
+    --experiment-name orf_siu6_or60_n3_midpoint \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
