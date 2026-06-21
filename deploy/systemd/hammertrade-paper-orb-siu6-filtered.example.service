@@ -1,0 +1,43 @@
+# HammerTrade Paper Trader — SiU6 ORB SHORT filtered (no real orders).
+# ORB SHORT with OR range cap ≤500 pts AND breakout volume filter ≥2.0×avg.
+# Backtest OOS (May 2026): 9 trades, WR=77.8%, PF=3.52 vs baseline PF=1.68.
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-orb-siu6-filtered.example.service \
+#       /etc/systemd/system/hammertrade-paper-orb-siu6-filtered.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-orb-siu6-filtered
+
+[Unit]
+Description=HammerTrade Paper Trader — SiU6 ORB SHORT filtered (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orb_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --direction SHORT \
+    --opening-range-start 10:00 \
+    --opening-range-end 11:00 \
+    --take-r 2.0 \
+    --point-value-rub 10.0 \
+    --max-or-range 500 \
+    --breakout-vol-mult 2.0 \
+    --state-db data/paper/paper_state_siu6_orb_filtered.sqlite \
+    --status-file runtime/paper_status_SiU6_ORB_FILTERED.json \
+    --csv-output out/paper/paper_trades_SiU6_ORB_FILTERED.csv \
+    --log-file logs/paper_SiU6_ORB_FILTERED.log \
+    --experiment-name orb_siu6_short2r_cap500_vol2x \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

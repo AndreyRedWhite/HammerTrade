@@ -1,0 +1,8 @@
+timezone: Europe/Moscow
+
+weekday_sessions:
+  - name: main
+    start: "10:00"
+    end: "18:50"
+
+stale_candle_grace_minutes: 3

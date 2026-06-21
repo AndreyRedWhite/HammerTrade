@@ -41,6 +41,10 @@ def _parse_args() -> argparse.Namespace:
                    help="RUB value per 1 price point (instrument-specific)")
     p.add_argument("--commission-rub", type=float, default=0.05,
                    help="Round-trip commission in RUB per contract")
+    p.add_argument("--max-or-range", type=float, default=None,
+                   help="Skip days where OR range exceeds this value (e.g. 500). None = no cap.")
+    p.add_argument("--breakout-vol-mult", type=float, default=None,
+                   help="Require breakout candle volume > mult × rolling 20-bar avg. None = off.")
     p.add_argument("--state-db", default="data/paper/paper_state_orb.sqlite")
     p.add_argument("--status-file", default="runtime/paper_status_SiM6_ORB.json")
     p.add_argument("--csv-output", default="out/paper/paper_trades_SiM6_ORB.csv")
@@ -197,6 +201,12 @@ def _run_cycle(
 
     logger.info(f"Candles loaded: {len(df)}, last: {df['timestamp'].iloc[-1]}")
 
+    # ── Precompute rolling volume avg for breakout filter ──────────────────────
+    if "volume" in df.columns and args.breakout_vol_mult is not None:
+        df["vol_avg20"] = df["volume"].rolling(20, min_periods=1).mean()
+    else:
+        df["vol_avg20"] = None
+
     # ── Load daily state ───────────────────────────────────────────────────────
     today_msk = _get_today_msk()
     daily_ctx = repo.load_daily_state(today_msk)
@@ -228,7 +238,9 @@ def _run_cycle(
     logger.info(f"Processing {len(new_candles)} new candle(s).")
 
     # ── Process each candle through state machine ──────────────────────────────
-    for _, candle in new_candles.iterrows():
+    for idx, candle in new_candles.iterrows():
+        recent_vol_avg = float(df.at[idx, "vol_avg20"]) if df.at[idx, "vol_avg20"] is not None else None
+
         updated_ctx, trade_to_upsert, logs = process_candle_orb(
             candle=candle,
             daily_ctx=daily_ctx,
@@ -242,6 +254,9 @@ def _run_cycle(
             experiment_name=args.experiment_name,
             point_value_rub=args.point_value_rub,
             commission_rub=args.commission_rub,
+            max_or_range=args.max_or_range,
+            breakout_vol_mult=args.breakout_vol_mult,
+            recent_vol_avg=recent_vol_avg,
         )
 
         for msg in logs:
@@ -366,6 +381,7 @@ def main():
     logger.info(f"  timeframe={args.timeframe} direction={args.direction}")
     logger.info(f"  or_window={args.opening_range_start}-{args.opening_range_end} MSK")
     logger.info(f"  take_r={args.take_r} time_exit=18:40 MSK")
+    logger.info(f"  max_or_range={args.max_or_range} breakout_vol_mult={args.breakout_vol_mult}")
     logger.info(f"  experiment={args.experiment_name}")
     logger.info(f"  poll_interval={args.poll_interval_seconds}s")
     logger.info(f"  state_db={args.state_db}")

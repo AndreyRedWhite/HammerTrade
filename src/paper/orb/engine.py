@@ -52,6 +52,9 @@ def process_candle_orb(
     experiment_name: str,
     point_value_rub: float = 10.0,
     commission_rub: float = 0.05,
+    max_or_range: Optional[float] = None,
+    breakout_vol_mult: Optional[float] = None,
+    recent_vol_avg: Optional[float] = None,
 ) -> tuple[Optional[OrbDailyContext], Optional[OrbPaperTrade], list[str]]:
     """Process one candle through the ORB state machine.
 
@@ -116,6 +119,16 @@ def process_candle_orb(
         )
         daily_ctx.done_for_day = True
         daily_ctx.state = OrbDayState.DONE_FOR_DAY
+        return daily_ctx, None, logs
+
+    if max_or_range is not None and or_range > max_or_range and not daily_ctx.trade_opened:
+        if not daily_ctx.done_for_day:
+            logs.append(
+                f"OR_RANGE_CAP_SKIP date={daily_ctx.date_msk} range={or_range:.1f} "
+                f"max_or_range={max_or_range} — skipping day"
+            )
+            daily_ctx.done_for_day = True
+            daily_ctx.state = OrbDayState.DONE_FOR_DAY
         return daily_ctx, None, logs
 
     # ── Manage open trade: check exit conditions ───────────────────────────────
@@ -259,6 +272,18 @@ def process_candle_orb(
         if direction.upper() == "SHORT":
             # Breakout: candle low breaks below OR low
             if float(candle["low"]) < or_low:
+                if (
+                    breakout_vol_mult is not None
+                    and recent_vol_avg is not None
+                    and recent_vol_avg > 0
+                    and float(candle.get("volume", 0)) < breakout_vol_mult * recent_vol_avg
+                ):
+                    logs.append(
+                        f"VOL_FILTER_SKIP ticker={ticker} "
+                        f"candle_vol={float(candle.get('volume', 0)):.0f} "
+                        f"avg={recent_vol_avg:.0f} mult={breakout_vol_mult}"
+                    )
+                    return daily_ctx, None, logs
                 entry_price = or_low
                 stop_price = or_high
                 take_price = entry_price - take_r * risk_points
@@ -290,6 +315,18 @@ def process_candle_orb(
         elif direction.upper() == "LONG":
             # Breakout: candle high breaks above OR high
             if float(candle["high"]) > or_high:
+                if (
+                    breakout_vol_mult is not None
+                    and recent_vol_avg is not None
+                    and recent_vol_avg > 0
+                    and float(candle.get("volume", 0)) < breakout_vol_mult * recent_vol_avg
+                ):
+                    logs.append(
+                        f"VOL_FILTER_SKIP ticker={ticker} "
+                        f"candle_vol={float(candle.get('volume', 0)):.0f} "
+                        f"avg={recent_vol_avg:.0f} mult={breakout_vol_mult}"
+                    )
+                    return daily_ctx, None, logs
                 entry_price = or_high
                 stop_price = or_low
                 take_price = entry_price + take_r * risk_points

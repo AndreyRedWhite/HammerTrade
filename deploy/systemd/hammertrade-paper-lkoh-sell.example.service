@@ -1,0 +1,37 @@
+# HammerTrade Paper Trader — LKOH hammer SELL (no real orders, READONLY_TOKEN only).
+# Equity on TQBR. Backtest Jan-Apr 2026: 163 trades, WR=69.9%, PF=1.912, point_value=1 rub.
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-lkoh-sell.example.service /etc/systemd/system/hammertrade-paper-lkoh-sell.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-lkoh-sell
+
+[Unit]
+Description=HammerTrade Paper Trader — LKOH hammer SELL (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_paper_trader.py \
+    --ticker LKOH \
+    --class-code TQBR \
+    --timeframe 1m \
+    --profile balanced \
+    --params configs/hammer_detector_lkoh.env \
+    --direction-filter SELL \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_equities.yaml \
+    --api-timeout-sec 10 \
+    --state-db data/paper/paper_state_lkoh_sell.sqlite \
+    --status-file runtime/paper_status_LKOH_SELL.json \
+    --trades-output out/paper/paper_trades_LKOH_SELL.csv \
+    --log-file logs/paper_LKOH_SELL.log \
+    --experiment-name lkoh_sell
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
