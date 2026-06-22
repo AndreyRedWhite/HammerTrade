@@ -84,6 +84,28 @@ def _pnl_cell(v) -> str:
     return f"<td data-sort='{_num(v)}' style='color:{color};font-weight:600'>{_fmt(v)}</td>"
 
 
+def _sparkline(curve: list[float], w: int = 96, h: int = 26) -> str:
+    if not curve or len(curve) < 2:
+        return "<span style='color:#9aa0a6'>—</span>"
+    pad = 2.0
+    lo, hi = min(curve), max(curve)
+    rng = (hi - lo) or 1.0
+    n = len(curve)
+    pts = []
+    for i, v in enumerate(curve):
+        x = pad + (w - 2 * pad) * i / (n - 1)
+        y = pad + (h - 2 * pad) * (1 - (v - lo) / rng)
+        pts.append(f"{x:.1f},{y:.1f}")
+    color = "#1a7f37" if curve[-1] >= 0 else "#cf222e"
+    zl = ""
+    if lo <= 0 <= hi:
+        zy = pad + (h - 2 * pad) * (1 - (0 - lo) / rng)
+        zl = (f"<line x1='{pad}' y1='{zy:.1f}' x2='{w-pad}' y2='{zy:.1f}' "
+              f"stroke='#d0d7de' stroke-width='0.6'/>")
+    return (f"<svg width='{w}' height='{h}' style='vertical-align:middle'>{zl}"
+            f"<polyline fill='none' stroke='{color}' stroke-width='1.4' points='{' '.join(pts)}'/></svg>")
+
+
 _CSS = """
 *{box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
@@ -115,6 +137,12 @@ tbody tr:hover td{background:#f6f8fa}
 .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .hint{color:#6e7781;font-size:11px;margin:6px 2px 0}
+.controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:4px 2px 10px;font-size:13px}
+.controls label{color:#424a53}
+.controls select{font-size:13px;padding:3px 6px;border:1px solid #d0d7de;border-radius:6px;background:#fff}
+.controls .tog{display:flex;gap:5px;align-items:center;cursor:pointer}
+.famtbl{font-size:12.5px;margin-bottom:6px}
+.famtbl td,.famtbl th{padding:6px 10px}
 """
 
 _JS = """
@@ -136,14 +164,35 @@ function sortBy(idx){
  var s=ths[idx].querySelector('.ar');if(s)s.textContent=asc?'\\u25B2':'\\u25BC';
  try{localStorage.setItem('fleetSort',idx+','+(asc?1:0));}catch(e){}
 }
+function applyFilters(){
+ var fam=document.getElementById('fFam').value;
+ var st=document.getElementById('fStatus').value;
+ var prob=document.getElementById('fProblem').checked;
+ var rows=document.querySelectorAll('#fleet tbody tr');var shown=0;
+ rows.forEach(function(r){
+   var ok=true;
+   if(fam!=='all'&&r.getAttribute('data-family')!==fam)ok=false;
+   if(st!=='all'&&r.getAttribute('data-status')!==st)ok=false;
+   if(prob&&r.getAttribute('data-problem')!=='1')ok=false;
+   r.style.display=ok?'':'none'; if(ok)shown++;});
+ var c=document.getElementById('shownCount'); if(c)c.textContent=shown;
+ try{localStorage.setItem('fleetFilters',JSON.stringify({fam:fam,st:st,prob:prob}));}catch(e){}
+}
 window.addEventListener('DOMContentLoaded',function(){
  var ths=document.querySelectorAll('#fleet th');
  ths.forEach(function(th,i){th.addEventListener('click',function(){sortBy(i);});});
+ ['fFam','fStatus','fProblem'].forEach(function(id){
+   var el=document.getElementById(id); if(el)el.addEventListener('change',applyFilters);});
+ var fs=null;try{fs=JSON.parse(localStorage.getItem('fleetFilters'));}catch(e){}
+ if(fs){if(fs.fam)document.getElementById('fFam').value=fs.fam;
+   if(fs.st)document.getElementById('fStatus').value=fs.st;
+   document.getElementById('fProblem').checked=!!fs.prob;}
  var saved=null;try{saved=localStorage.getItem('fleetSort');}catch(e){}
  if(saved){var p=saved.split(',');var t=document.getElementById('fleet');
    t.setAttribute('data-col','x');t.setAttribute('data-asc',p[1]==='1'?'0':'1');sortBy(parseInt(p[0]));}
  else{var t=document.getElementById('fleet');t.setAttribute('data-col','x');
    t.setAttribute('data-asc','1');sortBy(6);} // default: lifetime PnL desc
+ applyFilters();
 });
 """
 
@@ -160,6 +209,8 @@ def _build_rows(base: Path, now: datetime):
     for r in weekly:
         m = r.lifetime
         pnl24 = d1[r.svc.unit].window.pnl_rub if r.svc.unit in d1 else 0.0
+        problem = (r.status_class == "FREEZE" or r.liveness != "OK"
+                   or r.svc.active != "active")
         rows.append({
             "status": r.status_class, "unit": r.svc.unit.replace("hammertrade-", "").replace(".service", ""),
             "family": r.svc.family, "instr": r.svc.instrument, "dir": r.svc.direction or "—",
@@ -168,6 +219,7 @@ def _build_rows(base: Path, now: datetime):
             "pnl24": pnl24, "pnl7": r.window.pnl_rub, "open": r.open_positions,
             "live": r.liveness, "apierr": r.api_errors,
             "active": r.svc.active, "cand": r.sandbox_capable,
+            "gw": m.gross_win, "gl": m.gross_loss, "curve": r.curve, "problem": problem,
         })
     return rows
 
@@ -210,6 +262,51 @@ def create_app() -> Flask:
             f"<div class='card' style='flex:1'><div class='k'>Status mix</div><div class='chips'>{chips}</div></div>"
             "</div>")
 
+        # family summary (grouping)
+        fam_agg: dict[str, dict] = {}
+        for r in rows:
+            f = fam_agg.setdefault(r["family"], {
+                "n": 0, "trades": 0, "pnl": 0.0, "pnl24": 0.0, "gw": 0.0, "gl": 0.0,
+                "PROMOTE": 0, "ACTIVE": 0, "WATCH": 0, "FREEZE": 0})
+            f["n"] += 1
+            f["trades"] += r["trades"]
+            f["pnl"] += r["pnl"]
+            f["pnl24"] += r["pnl24"]
+            f["gw"] += r["gw"]
+            f["gl"] += r["gl"]
+            f[r["status"]] += 1
+        fam_rows = ""
+        for fam in sorted(fam_agg, key=lambda k: -fam_agg[k]["pnl"]):
+            a = fam_agg[fam]
+            pf = (a["gw"] / a["gl"]) if a["gl"] > 0 else (float("inf") if a["gw"] > 0 else None)
+            mix = " ".join(f"{k[0]}{a[k]}" for k in ("PROMOTE", "ACTIVE", "WATCH", "FREEZE") if a[k])
+            pnl_c = "#1a7f37" if a["pnl"] >= 0 else "#cf222e"
+            p24_c = "#1a7f37" if a["pnl24"] >= 0 else "#cf222e"
+            fam_rows += (f"<tr><td class='l'>{_esc(fam)}</td><td>{a['n']}</td><td>{a['trades']}</td>"
+                         f"<td style='color:{pnl_c};font-weight:600'>{_fmt(a['pnl'])}</td>"
+                         f"<td style='color:{p24_c}'>{_fmt(a['pnl24'])}</td>"
+                         f"<td>{_fmt(pf,2)}</td><td class='l'>{_esc(mix)}</td></tr>")
+        fam_html = ("<div class='tablewrap'><table class='famtbl'><thead><tr>"
+                    "<th class='l'>family</th><th>#svc</th><th>trades</th><th>PnL ₽</th>"
+                    "<th>24h ₽</th><th>PF</th><th class='l'>status mix</th></tr></thead>"
+                    f"<tbody>{fam_rows}</tbody></table></div>")
+
+        # filter controls
+        fams = sorted({r["family"] for r in rows})
+        fam_opts = "".join(f"<option value='{_esc(f)}'>{_esc(f)}</option>" for f in fams)
+        controls = (
+            "<div class='controls'>"
+            "<span>Фильтры:</span>"
+            "<label class='tog'><input type='checkbox' id='fProblem'> ⚠ только проблемные</label>"
+            "<label>семейство: <select id='fFam'><option value='all'>все</option>"
+            f"{fam_opts}</select></label>"
+            "<label>статус: <select id='fStatus'><option value='all'>все</option>"
+            "<option>PROMOTE</option><option>ACTIVE</option><option>WATCH</option>"
+            "<option>FREEZE</option></select></label>"
+            "<span style='color:#6e7781'>показано: <b id='shownCount'>"
+            f"{len(rows)}</b>/{len(rows)}</span>"
+            "</div>")
+
         # candidates
         cands = [r for r in rows if r["cand"]]
         cand_html = "<div class='cand'>"
@@ -230,7 +327,7 @@ def create_app() -> Flask:
                 ("pnl", "PnL ₽", ""), ("pf", "PF", ""), ("wr", "WR%", ""), ("maxdd", "MaxDD", ""),
                 ("avgw", "avgW", ""), ("avgl", "avgL", ""), ("pnl24", "24h ₽", ""),
                 ("pnl7", "7d ₽", ""), ("open", "open", ""), ("live", "live", ""),
-                ("apierr", "apiErr", "")]
+                ("apierr", "apiErr", ""), ("trend", "trend (PnL)", "l")]
         head = "".join(f"<th class='{c[2]}'>{_esc(c[1])} <span class='ar'></span></th>" for c in cols)
 
         body = ""
@@ -238,7 +335,8 @@ def create_app() -> Flask:
             live_color = "#1a7f37" if r["live"] == "OK" else "#cf222e"
             warn = "" if r["active"] == "active" else " ⛔"
             body += (
-                "<tr>"
+                f"<tr data-family='{_esc(r['family'])}' data-status='{_esc(r['status'])}' "
+                f"data-problem='{'1' if r['problem'] else '0'}'>"
                 f"<td class='l' data-sort='{_STATUS_RANK.get(r['status'],9)}'>{_badge(r['status'])}</td>"
                 f"<td class='l'>{_esc(r['unit'])}{warn}</td>"
                 f"<td class='l'>{_esc(r['family'])}</td>"
@@ -255,6 +353,7 @@ def create_app() -> Flask:
                 + f"<td data-sort='{_num(r['open'])}'>{r['open']}</td>"
                 f"<td data-sort='{'0' if r['live']=='OK' else '1'}' style='color:{live_color}'>{_esc(r['live'])}</td>"
                 f"<td data-sort='{_num(r['apierr'])}'>{r['apierr']}</td>"
+                f"<td class='l' data-sort='{_num(r['pnl'])}'>{_sparkline(r['curve'])}</td>"
                 "</tr>")
 
         page = (
@@ -268,8 +367,9 @@ def create_app() -> Flask:
             "PF/WR/MaxDD/avg — за всё время · только чтение</div>"
             + cards
             + "<h2>Sandbox / live-capable кандидаты</h2>" + cand_html
-            + "<h2>Все сервисы</h2>"
-            "<div class='tablewrap'><table id='fleet'>"
+            + "<h2>По семействам стратегий</h2>" + fam_html
+            + "<h2>Все сервисы</h2>" + controls
+            + "<div class='tablewrap'><table id='fleet'>"
             f"<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>"
             "<div class='hint'>Клик по заголовку колонки — сортировка (повторный клик меняет направление). "
             "Выбор сортировки запоминается. По умолчанию — по PnL за всё время.</div>"

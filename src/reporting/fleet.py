@@ -20,6 +20,7 @@ from src.reporting.metrics import (
     Trade,
     classify,
     compute_metrics,
+    cumulative_curve,
     filter_window,
 )
 
@@ -60,6 +61,7 @@ class ServiceReport:
     api_errors: int
     status_class: str
     sandbox_capable: bool = False
+    curve: list[float] = field(default_factory=list)  # lifetime cumulative PnL
 
 
 # ── discovery ─────────────────────────────────────────────────────────────────
@@ -271,6 +273,7 @@ def build_reports(base: Path, now: datetime, window_days: int) -> list[ServiceRe
             liveness=liveness, api_errors=_api_errors_of(status),
             status_class=status_class,
             sandbox_capable=(svc.family == "sandbox" or status_class == "PROMOTE"),
+            curve=cumulative_curve(closed),
         ))
     return reports
 

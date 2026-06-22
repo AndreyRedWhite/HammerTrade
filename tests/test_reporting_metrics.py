@@ -85,3 +85,25 @@ def test_classify_orb_thresholds():
 def test_classify_freeze_on_none_pf_large_sample():
     # all-losing strategy → pf None with big sample → FREEZE
     assert classify("orb", Metrics(trades=40, pf=None), "OK") == "FREEZE"
+
+
+def test_gross_win_loss():
+    m = compute_metrics([_t(1, 100), _t(2, -40), _t(3, 60)])
+    assert m.gross_win == 160.0
+    assert m.gross_loss == 40.0
+
+
+def test_cumulative_curve():
+    from src.reporting.metrics import cumulative_curve
+    c = cumulative_curve([_t(3, 100), _t(2, -30), _t(1, 50)])
+    # ordered by exit_ts ascending: day3(oldest)=+100, day2=+70, day1(newest)=... 
+    # exit_ts: _t(days_ago) => smaller days_ago = more recent. sorted ascending by ts
+    # = day3 (oldest) -> day2 -> day1. cumulative: 100,70,120
+    assert c == [100.0, 70.0, 120.0]
+
+
+def test_cumulative_curve_downsample():
+    from src.reporting.metrics import cumulative_curve
+    trades = [_t(100 - i, 1) for i in range(100)]
+    c = cumulative_curve(trades, max_points=20)
+    assert len(c) == 20

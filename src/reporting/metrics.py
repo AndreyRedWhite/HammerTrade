@@ -26,6 +26,8 @@ class Metrics:
     max_dd_rub: float = 0.0
     avg_win: Optional[float] = None
     avg_loss: Optional[float] = None
+    gross_win: float = 0.0           # for aggregating PF across services
+    gross_loss: float = 0.0          # absolute value of summed losses
 
 
 # Per-family classification thresholds (edge assessment on LIFETIME trades).
@@ -76,7 +78,24 @@ def compute_metrics(trades: list[Trade]) -> Metrics:
         max_dd_rub=round(max_dd, 1),
         avg_win=round(sum(wins) / len(wins), 1) if wins else None,
         avg_loss=round(sum(losses) / len(losses), 1) if losses else None,
+        gross_win=round(gross_win, 1),
+        gross_loss=round(gross_loss, 1),
     )
+
+
+def cumulative_curve(trades: list[Trade], max_points: int = 40) -> list[float]:
+    """Cumulative PnL over trades ordered by exit time, downsampled to max_points."""
+    if not trades:
+        return []
+    ordered = sorted(trades, key=lambda t: t.exit_ts)
+    cum, curve = 0.0, []
+    for t in ordered:
+        cum += t.pnl_rub
+        curve.append(round(cum, 1))
+    if len(curve) <= max_points:
+        return curve
+    step = len(curve) / max_points
+    return [curve[min(int(i * step), len(curve) - 1)] for i in range(max_points)]
 
 
 def classify(family: str, lifetime: Metrics, liveness: str) -> str:
