@@ -1,0 +1,49 @@
+# HammerTrade Paper Trader — pref/ordinary stat-arb BASKET (no real orders).
+# Market-neutral mean-reversion of log(pref)-log(ord) spread on 4 pairs:
+#   SBERP/SBER, TATNP/TATN, SNGSP/SNGS, RTKMP/RTKM
+# Backtest (60m, zw50, entry2.0, exit0.5): train 199tr WR64 PF1.34,
+# OOS May 60tr WR63 PF1.50. THIN cost margin (breakeven ~5bps/leg) → paper
+# validation tracks theoretical (signal close) vs market (next-bar open) fill.
+# READONLY_TOKEN only, NO orders. First market-neutral sleeve (diversifies
+# the SHORT-Si book).
+#
+# Install:
+#   sudo cp deploy/systemd/hammertrade-paper-pairs-basket.example.service /etc/systemd/system/hammertrade-paper-pairs-basket.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-paper-pairs-basket
+
+[Unit]
+Description=HammerTrade Paper Trader — pref/ordinary stat-arb basket (paper only, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_paper_trader.py \
+    --pairs SBERP:SBER,TATNP:TATN,SNGSP:SNGS,RTKMP:RTKM \
+    --class-code TQBR \
+    --bar-timeframe 1h \
+    --z-window 50 \
+    --entry-z 2.0 \
+    --exit-z 0.5 \
+    --stop-z 4.0 \
+    --max-hold-bars 45 \
+    --notional-per-leg 100000 \
+    --cost-bps-per-leg-side 3.5 \
+    --lookback-minutes 20160 \
+    --state-db data/paper/paper_state_pairs_basket.sqlite \
+    --status-file runtime/paper_status_PAIRS_BASKET.json \
+    --csv-output out/paper/paper_trades_PAIRS_BASKET.csv \
+    --log-file logs/paper_PAIRS_BASKET.log \
+    --experiment-name pairs_basket_e2.0_x0.5_60m \
+    --poll-interval-seconds 300 \
+    --env prod \
+    --market-hours-config configs/market_hours/moex_equities.yaml \
+    --api-timeout-sec 15
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
