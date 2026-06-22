@@ -62,6 +62,9 @@ class ServiceReport:
     status_class: str
     sandbox_capable: bool = False
     curve: list[float] = field(default_factory=list)  # lifetime cumulative PnL
+    first_trade_ts: Optional[datetime] = None
+    last_trade_ts: Optional[datetime] = None
+    restarts: int = 0
 
 
 # ── discovery ─────────────────────────────────────────────────────────────────
@@ -268,12 +271,20 @@ def build_reports(base: Path, now: datetime, window_days: int) -> list[ServiceRe
         window = compute_metrics(filter_window(closed, now, window_days))
         liveness = _liveness_of(status)
         status_class = classify(svc.family, lifetime, liveness)
+        exits = sorted(t.exit_ts for t in closed) if closed else []
+        try:
+            restarts = int(svc.restarts)
+        except (ValueError, TypeError):
+            restarts = 0
         reports.append(ServiceReport(
             svc=svc, window=window, lifetime=lifetime, open_positions=open_n,
             liveness=liveness, api_errors=_api_errors_of(status),
             status_class=status_class,
             sandbox_capable=(svc.family == "sandbox" or status_class == "PROMOTE"),
             curve=cumulative_curve(closed),
+            first_trade_ts=exits[0] if exits else None,
+            last_trade_ts=exits[-1] if exits else None,
+            restarts=restarts,
         ))
     return reports
 

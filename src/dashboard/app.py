@@ -23,8 +23,16 @@ from pathlib import Path
 from flask import Flask, Response, request
 
 from src.reporting.fleet import build_reports
+from src.reporting.funnel import FunnelConfig, decide
 
 BASE_DIR = Path(os.environ.get("HAMMERTRADE_BASE", ".")).resolve()
+
+_VERDICT = {
+    "ADVANCE": ("#1a7f37", "#dafbe1"), "FREEZE": ("#cf222e", "#ffebe9"),
+    "KILL": ("#82071e", "#ffd7d5"), "LOW_ACTIVITY": ("#9a6700", "#fff8c5"),
+    "HOLD": ("#57606a", "#eaeef2"), "INSUFFICIENT_DATA": ("#8c959f", "#f6f8fa"),
+}
+_VERDICT_ORDER = ["ADVANCE", "FREEZE", "KILL", "LOW_ACTIVITY", "HOLD", "INSUFFICIENT_DATA"]
 
 _STATUS = {
     "PROMOTE": ("#1a7f37", "#dafbe1"),
@@ -205,9 +213,11 @@ def _badge(status: str) -> str:
 def _build_rows(base: Path, now: datetime):
     d1 = {r.svc.unit: r for r in build_reports(base, now, 1)}
     weekly = build_reports(base, now, 7)
+    cfg = FunnelConfig()
     rows = []
     for r in weekly:
         m = r.lifetime
+        dec = decide(r, cfg, now)
         pnl24 = d1[r.svc.unit].window.pnl_rub if r.svc.unit in d1 else 0.0
         problem = (r.status_class == "FREEZE" or r.liveness != "OK"
                    or r.svc.active != "active")
@@ -220,6 +230,8 @@ def _build_rows(base: Path, now: datetime):
             "live": r.liveness, "apierr": r.api_errors,
             "active": r.svc.active, "cand": r.sandbox_capable,
             "gw": m.gross_win, "gl": m.gross_loss, "curve": r.curve, "problem": problem,
+            "verdict": dec.verdict, "stage": dec.stage, "advance_to": dec.advance_to,
+            "rationale": dec.rationale,
         })
     return rows
 
@@ -261,6 +273,33 @@ def create_app() -> Flask:
             f"<span style='font-size:12px;color:#6e7781'> active · {degraded} degr</span></div></div>"
             f"<div class='card' style='flex:1'><div class='k'>Status mix</div><div class='chips'>{chips}</div></div>"
             "</div>")
+
+        # funnel decisions
+        vcounts: dict[str, int] = {}
+        for r in rows:
+            vcounts[r["verdict"]] = vcounts.get(r["verdict"], 0) + 1
+        vchips = "".join(
+            f"<span class='chip' style='color:{_VERDICT[v][0]};background:{_VERDICT[v][1]}'>"
+            f"{v} {vcounts.get(v,0)}</span>"
+            for v in _VERDICT_ORDER if vcounts.get(v))
+        action_rows = [r for r in rows if r["verdict"] in ("ADVANCE", "FREEZE", "KILL", "LOW_ACTIVITY")]
+        action_rows.sort(key=lambda r: _VERDICT_ORDER.index(r["verdict"]))
+        fl = "<div class='cand'>"
+        if action_rows:
+            for r in action_rows:
+                fg, bg = _VERDICT[r["verdict"]]
+                fl += (f"<div class='candcard' style='border-left-color:{fg}'>"
+                       f"<span class='badge' style='color:{fg};background:{bg}'>{_esc(r['verdict'])}</span> "
+                       f"<b>{_esc(r['unit'])}</b> · {_esc(r['family'])} {_esc(r['instr'])} "
+                       f"{_esc(r['dir'])} · stage: {_esc(r['stage'])} → {_esc(r['advance_to'])}"
+                       f"<br><span style='color:#57606a'>{_esc(r['rationale'])}</span></div>")
+        else:
+            fl += ("<div class='candcard' style='border-left-color:#57606a'>Нет действий: "
+                   "никого не двигаем/не замораживаем сейчас.</div>")
+        fl += (f"<div class='hint'>+ HOLD {vcounts.get('HOLD',0)}, "
+               f"INSUFFICIENT_DATA {vcounts.get('INSUFFICIENT_DATA',0)} (копят выборку). "
+               "Критерии — docs/research_funnel.md</div></div>")
+        funnel_html = f"<div class='chips' style='margin-bottom:8px'>{vchips}</div>" + fl
 
         # family summary (grouping)
         fam_agg: dict[str, dict] = {}
@@ -366,6 +405,7 @@ def create_app() -> Flask:
             f"<div class='meta'>Обновлено {now.strftime('%Y-%m-%d %H:%M UTC')} · автообновление 120с · "
             "PF/WR/MaxDD/avg — за всё время · только чтение</div>"
             + cards
+            + "<h2>Funnel — решения по стратегиям</h2>" + funnel_html
             + "<h2>Sandbox / live-capable кандидаты</h2>" + cand_html
             + "<h2>По семействам стратегий</h2>" + fam_html
             + "<h2>Все сервисы</h2>" + controls

@@ -28,6 +28,9 @@ class Metrics:
     avg_loss: Optional[float] = None
     gross_win: float = 0.0           # for aggregating PF across services
     gross_loss: float = 0.0          # absolute value of summed losses
+    top1_share: Optional[float] = None   # best trade / gross_win (1-trade dependency)
+    top3_share: Optional[float] = None   # top-3 wins / gross_win
+    current_dd: float = 0.0          # peak-to-latest drawdown (growing-DD signal)
 
 
 # Per-family classification thresholds (edge assessment on LIFETIME trades).
@@ -69,6 +72,11 @@ def compute_metrics(trades: list[Trade]) -> Metrics:
         cum += t.pnl_rub
         peak = max(peak, cum)
         max_dd = max(max_dd, peak - cum)
+    current_dd = peak - cum  # drawdown from the running peak to the latest equity
+
+    top_wins = sorted(wins, reverse=True)
+    top1_share = (top_wins[0] / gross_win) if (top_wins and gross_win > 0) else None
+    top3_share = (sum(top_wins[:3]) / gross_win) if (top_wins and gross_win > 0) else None
 
     return Metrics(
         trades=len(trades),
@@ -80,6 +88,9 @@ def compute_metrics(trades: list[Trade]) -> Metrics:
         avg_loss=round(sum(losses) / len(losses), 1) if losses else None,
         gross_win=round(gross_win, 1),
         gross_loss=round(gross_loss, 1),
+        top1_share=round(top1_share, 3) if top1_share is not None else None,
+        top3_share=round(top3_share, 3) if top3_share is not None else None,
+        current_dd=round(current_dd, 1),
     )
 
 
