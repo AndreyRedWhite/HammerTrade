@@ -1,0 +1,17 @@
+# Generates the weekly fleet report (markdown) across all paper/sandbox services.
+# Read-only. Places no orders.
+#
+# Install (with the .timer):
+#   sudo cp deploy/systemd/hammertrade-fleet-report-weekly.example.service /etc/systemd/system/hammertrade-fleet-report-weekly.service
+#   sudo cp deploy/systemd/hammertrade-fleet-report-weekly.example.timer /etc/systemd/system/hammertrade-fleet-report-weekly.timer
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-fleet-report-weekly.timer
+
+[Unit]
+Description=HammerTrade weekly fleet report
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/generate_fleet_report.py --period weekly --latest-symlink
+User=vorontsov

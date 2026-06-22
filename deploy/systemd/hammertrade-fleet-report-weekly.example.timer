@@ -1,0 +1,10 @@
+# Fires the weekly fleet report Friday 19:20 MSK (16:20 UTC), after week close.
+[Unit]
+Description=HammerTrade weekly fleet report timer
+
+[Timer]
+OnCalendar=Fri *-*-* 16:20:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
