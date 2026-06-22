@@ -6,3 +6,5 @@ PyYAML
 # T-Bank Invest SDK (custom PyPI index — included so pip install -r requirements.txt works)
 --extra-index-url https://opensource.tbank.ru/api/v4/projects/238/packages/pypi/simple
 t-tech-investments
+flask>=3.0
+waitress>=3.0

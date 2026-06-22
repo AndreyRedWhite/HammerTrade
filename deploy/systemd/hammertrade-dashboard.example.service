@@ -1,0 +1,27 @@
+# HammerTrade read-only fleet dashboard (Flask + waitress).
+# Binds 127.0.0.1 only — TLS + public access via nginx (see deploy/nginx/).
+# Requires DASHBOARD_USER and DASHBOARD_PASS in /opt/hammertrade/.env (fail-closed).
+# Read-only: no orders, no DB writes.
+#
+# Install:
+#   .venv/bin/pip install flask waitress
+#   # add DASHBOARD_USER=... and DASHBOARD_PASS=... to /opt/hammertrade/.env
+#   sudo cp deploy/systemd/hammertrade-dashboard.example.service /etc/systemd/system/hammertrade-dashboard.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-dashboard
+
+[Unit]
+Description=HammerTrade read-only fleet dashboard (localhost; nginx terminates TLS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_dashboard.py --host 127.0.0.1 --port 8787
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
