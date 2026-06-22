@@ -1,0 +1,11 @@
+# Fires the portfolio report daily at 19:17 MSK (16:17 UTC), after the fleet
+# (16:15) and decision (16:16) reports so all three are fresh together.
+[Unit]
+Description=HammerTrade portfolio report timer
+
+[Timer]
+OnCalendar=*-*-* 16:17:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -65,6 +65,7 @@ class ServiceReport:
     first_trade_ts: Optional[datetime] = None
     last_trade_ts: Optional[datetime] = None
     restarts: int = 0
+    trades: list = field(default_factory=list)  # closed Trade objects (portfolio analytics)
 
 
 # ── discovery ─────────────────────────────────────────────────────────────────
@@ -285,6 +286,7 @@ def build_reports(base: Path, now: datetime, window_days: int) -> list[ServiceRe
             first_trade_ts=exits[0] if exits else None,
             last_trade_ts=exits[-1] if exits else None,
             restarts=restarts,
+            trades=closed,
         ))
     return reports
 

@@ -1,0 +1,17 @@
+# Generates the portfolio / exposure report (combined PnL, correlations,
+# exposures, risk/return contribution). Read-only. Places no orders.
+#
+# Install (with the .timer):
+#   sudo cp deploy/systemd/hammertrade-portfolio-report.example.service /etc/systemd/system/hammertrade-portfolio-report.service
+#   sudo cp deploy/systemd/hammertrade-portfolio-report.example.timer /etc/systemd/system/hammertrade-portfolio-report.timer
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-portfolio-report.timer
+
+[Unit]
+Description=HammerTrade portfolio / exposure report
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/generate_portfolio_report.py --latest-symlink
+User=vorontsov

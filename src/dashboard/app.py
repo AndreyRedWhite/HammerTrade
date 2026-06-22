@@ -24,6 +24,7 @@ from flask import Flask, Response, request
 
 from src.reporting.fleet import build_reports
 from src.reporting.funnel import FunnelConfig, decide
+from src.reporting.portfolio import analyze
 
 BASE_DIR = Path(os.environ.get("HAMMERTRADE_BASE", ".")).resolve()
 
@@ -233,7 +234,7 @@ def _build_rows(base: Path, now: datetime):
             "verdict": dec.verdict, "stage": dec.stage, "advance_to": dec.advance_to,
             "rationale": dec.rationale,
         })
-    return rows
+    return rows, weekly
 
 
 def create_app() -> Flask:
@@ -247,7 +248,8 @@ def create_app() -> Flask:
     @requires_auth
     def index():
         now = datetime.now(tz=timezone.utc)
-        rows = _build_rows(BASE_DIR, now)
+        rows, weekly = _build_rows(BASE_DIR, now)
+        pr = analyze(weekly)
 
         by_class: dict[str, int] = {}
         for r in rows:
@@ -300,6 +302,44 @@ def create_app() -> Flask:
                f"INSUFFICIENT_DATA {vcounts.get('INSUFFICIENT_DATA',0)} (копят выборку). "
                "Критерии — docs/research_funnel.md</div></div>")
         funnel_html = f"<div class='chips' style='margin-bottom:8px'>{vchips}</div>" + fl
+
+        # portfolio / exposure
+        def _pc(v):
+            c = "#1a7f37" if v > 0 else ("#cf222e" if v < 0 else "#57606a")
+            return f"<span style='color:{c}'>{v:+,.0f}</span>"
+
+        def _exp_table(title, g, keyname):
+            rows_h = "".join(
+                f"<tr><td class='l'>{_esc(k)}</td><td>{e['n']}</td>"
+                f"<td>{_pc(e['pnl'])}</td><td>{e['risk_pct']:.0f}</td></tr>"
+                for k, e in g.items())
+            return (f"<div class='tablewrap' style='flex:1;min-width:230px'><table class='famtbl'>"
+                    f"<thead><tr><th class='l'>{_esc(keyname)}</th><th>#</th><th>PnL ₽</th>"
+                    f"<th>risk%</th></tr></thead><tbody>{rows_h}</tbody></table></div>")
+
+        sharpe = f" · Sharpe≈{pr.sharpe_annual}" if pr.sharpe_annual is not None else ""
+        pf_summary = (f"<p class='sum'>{pr.n_strategies} strategies · {pr.n_dates} trading days · "
+                      f"combined PnL {_pc(pr.total_pnl)}₽ · daily vol {pr.daily_vol:,.0f}₽{sharpe} · "
+                      f"max DD {pr.max_dd:,.0f}₽</p>")
+        flags_html = ""
+        if pr.overload_flags:
+            flags_html = "<div class='cand'>" + "".join(
+                f"<div class='candcard' style='border-left-color:#cf222e'>{_esc(f)}</div>"
+                for f in pr.overload_flags) + "</div>"
+        corr_html = ""
+        if pr.corr_pairs:
+            items = "".join(
+                f"<li><b>{_esc(a)}</b> ↔ <b>{_esc(b)}</b>: {c:+.2f} "
+                f"({'redundant' if c > 0 else 'diversifying'})</li>"
+                for a, b, c in pr.corr_pairs[:8])
+            corr_html = f"<div class='hint'>Correlations (|r|≥0.5):</div><ul style='margin:2px 0 0 18px;font-size:12px'>{items}</ul>"
+        portfolio_html = (
+            pf_summary + flags_html
+            + "<div style='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px'>"
+            + _exp_table("market", pr.by_asset_class, "market")
+            + _exp_table("direction", pr.by_direction, "direction")
+            + _exp_table("instrument", pr.by_instrument, "instrument")
+            + "</div>" + corr_html)
 
         # family summary (grouping)
         fam_agg: dict[str, dict] = {}
@@ -405,6 +445,7 @@ def create_app() -> Flask:
             f"<div class='meta'>Обновлено {now.strftime('%Y-%m-%d %H:%M UTC')} · автообновление 120с · "
             "PF/WR/MaxDD/avg — за всё время · только чтение</div>"
             + cards
+            + "<h2>Портфель / экспозиция</h2>" + portfolio_html
             + "<h2>Funnel — решения по стратегиям</h2>" + funnel_html
             + "<h2>Sandbox / live-capable кандидаты</h2>" + cand_html
             + "<h2>По семействам стратегий</h2>" + fam_html
