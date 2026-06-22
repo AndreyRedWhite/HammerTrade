@@ -1,0 +1,17 @@
+# Generates the research-funnel decision report (markdown) for all strategies.
+# Read-only: reads SQLite DBs + status JSON + systemctl. Places no orders.
+#
+# Install (with the .timer):
+#   sudo cp deploy/systemd/hammertrade-decision-report.example.service /etc/systemd/system/hammertrade-decision-report.service
+#   sudo cp deploy/systemd/hammertrade-decision-report.example.timer /etc/systemd/system/hammertrade-decision-report.timer
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-decision-report.timer
+
+[Unit]
+Description=HammerTrade research-funnel decision report
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/generate_decision_report.py --latest-symlink
+User=vorontsov

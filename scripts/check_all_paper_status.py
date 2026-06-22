@@ -142,7 +142,14 @@ def _systemd_units() -> list[tuple[str, str, str]] | None:
                                       capture_output=True, text=True, timeout=10).stdout.strip() or "?"
         except subprocess.SubprocessError:
             restarts = "?"
-        units.append((unit, active, restarts))
+        try:
+            props = subprocess.run(["systemctl", "show", unit, "-p", "Type", "-p", "Result"],
+                                   capture_output=True, text=True, timeout=10).stdout
+            stype = next((l.split("=", 1)[1] for l in props.splitlines() if l.startswith("Type=")), "?")
+            result = next((l.split("=", 1)[1] for l in props.splitlines() if l.startswith("Result=")), "?")
+        except subprocess.SubprocessError:
+            stype, result = "?", "?"
+        units.append((unit, active, restarts, stype, result))
     return sorted(units)
 
 
@@ -161,15 +168,26 @@ def main() -> int:
         if units is None:
             print("\n[systemd] unavailable (systemctl not found) — skipping unit section")
         else:
-            active_n = sum(1 for _, a, _ in units if a == "active")
-            print(f"\n[systemd units]  {active_n}/{len(units)} active")
+            longrun = [u for u in units if u[3] != "oneshot"]
+            oneshots = [u for u in units if u[3] == "oneshot"]
+            active_n = sum(1 for u in longrun if u[1] == "active")
+            print(f"\n[systemd units]  {active_n}/{len(longrun)} long-running active"
+                  + (f" · {len(oneshots)} oneshot (timer-driven)" if oneshots else ""))
             print("-" * 70)
-            for unit, active, restarts in units:
+            for unit, active, restarts, stype, result in longrun:
                 flag = "" if active == "active" else "  <-- NOT ACTIVE"
                 if active != "active":
                     exit_code = 1
                 short = unit.replace("hammertrade-", "").replace(".service", "")
                 print(f"  {short:46s} {active:10s} restarts={restarts}{flag}")
+            for unit, active, restarts, stype, result in oneshots:
+                # oneshot services are inactive between timer firings — normal.
+                # Only a failed last run is a problem.
+                flag = "" if result in ("success", "") else f"  <-- last run {result}"
+                if result not in ("success", ""):
+                    exit_code = 1
+                short = unit.replace("hammertrade-", "").replace(".service", "")
+                print(f"  {short:46s} oneshot    last={result or 'n/a'}{flag}")
 
     # B. status JSONs
     rt = Path(args.runtime_dir)

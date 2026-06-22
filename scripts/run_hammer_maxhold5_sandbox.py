@@ -150,10 +150,10 @@ def check_token_and_account(cfg: dict) -> str:
     return account_id
 
 
-def _setup_logging(log_file: str, dry_run: bool) -> logging.Logger:
-    logger = logging.getLogger("sandbox_hammer_maxhold5")
+def _setup_logging(log_file: str, dry_run: bool, name: str = "sandbox_hammer_maxhold5") -> logging.Logger:
+    logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    fmt = logging.Formatter("%(asctime)s %(levelname)s [sandbox_hammer_maxhold5] %(message)s")
+    fmt = logging.Formatter(f"%(asctime)s %(levelname)s [{name}] %(message)s")
     if not logger.handlers:
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(fmt)
@@ -280,7 +280,7 @@ def _build_context(cfg: dict, dry_run: bool, logger: logging.Logger) -> RunnerCo
         class_code=class_code,
         timeframe=timeframe,
         profile=profile,
-        experiment_name="sandbox_hammer_maxhold5",
+        experiment_name=cfg.get("experiment_name", "sandbox_hammer_maxhold5"),
     )
 
     market_config = None
@@ -391,7 +391,7 @@ def _write_status(
     )
 
     status = build_sandbox_status(
-        strategy="hammer_maxhold5",
+        strategy=ctx.cfg.get("strategy", "hammer_maxhold5"),
         ticker=ctx.ticker,
         direction=ctx.direction,
         max_hold_bars=ctx.engine_kwargs["max_hold_bars"],
@@ -901,7 +901,8 @@ def main():
     validate_safety(cfg)
 
     log_file = cfg.get("artifacts", {}).get("log", "logs/sandbox_hammer_maxhold5_SiU6.log")
-    logger = _setup_logging(log_file, args.dry_run)
+    logger = _setup_logging(log_file, args.dry_run,
+                            cfg.get("experiment_name", "sandbox_hammer_maxhold5"))
 
     logger.info("=" * 60)
     logger.info("HammerTrade Sandbox Runner — SANDBOX CONTOUR ONLY — NEVER LIVE")

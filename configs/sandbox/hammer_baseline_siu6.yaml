@@ -1,0 +1,78 @@
+# Sandbox order-placement config — Hammer BASELINE, SiU6 SELL.
+#
+# Second sandbox-execution service, the ADVANCE candidate from the research
+# funnel (paper baseline = hammertrade-paper.service classified ADVANCE).
+# Drives scripts/run_hammer_maxhold5_sandbox.py against the T-BANK SANDBOX
+# CONTOUR ONLY. Never live (real_orders_enabled hardcoded false; runner
+# hard-fails if env != sandbox or TINVEST_LIVE_TRADING_TOKEN set).
+#
+# Goal: compare baseline (pure stop/take, max_hold_bars=null) vs maxhold5
+# (max_hold_bars=5) at the sandbox-execution stage. This runs ALONGSIDE
+# hammertrade-sandbox-maxhold5 (which is NOT changed/stopped) on a SEPARATE
+# sandbox account (SANDBOX_ACCOUNT_ID_BASELINE) so positions/margin/PnL do
+# not mix. Paper control groups (hammertrade-paper.service /
+# hammertrade-paper-maxhold5.service) are untouched.
+
+mode: sandbox
+strategy: hammer_baseline
+experiment_name: sandbox_hammer_baseline
+ticker: SiU6
+class_code: SPBFUT
+timeframe: 1m
+profile: balanced
+direction: SELL
+env: sandbox
+
+# Signal/entry/exit — mirror hammertrade-paper.service (baseline control):
+# same detector params, but NO max_hold (pure stop/take). Only difference vs
+# the maxhold5 sandbox config is max_hold_bars (null vs 5).
+params_file: configs/hammer_detector_balanced.env
+entry_mode: breakout
+entry_horizon_bars: 3
+take_r: 1.0
+stop_buffer_points: 0.0
+slippage_ticks: 1.0
+max_hold_bars: null
+contracts: 1
+
+fetch:
+  lookback_candles: 300
+  api_timeout_sec: 10
+  poll_interval_seconds: 20
+
+session:
+  timezone: Europe/Moscow
+  market_hours_config: configs/market_hours/moex_futures.yaml
+
+orders:
+  enabled: true
+  environment: sandbox
+  real_orders_enabled: false
+  order_type: market
+  account_id_env: SANDBOX_ACCOUNT_ID_BASELINE   # SEPARATE account from maxhold5
+  token_env: SANDBOX_TOKEN
+
+risk:
+  capital_budget_rub: 40000
+  max_position_notional_rub: 40000
+  max_order_notional_rub: 40000
+  max_daily_loss_rub: 3000
+  max_total_loss_rub: 10000
+  max_trades_per_day: 50
+  max_consecutive_errors: 3
+  max_consecutive_losses: 3
+  max_open_positions_per_strategy: 1
+  max_exit_retries: 3
+  kill_switch_file: runtime/STOP_SANDBOX_TRADING_BASELINE
+  margin_per_lot_rub: 6000
+
+artifacts:
+  db: data/sandbox/sandbox_state_hammer_baseline_siu6.sqlite
+  status: runtime/sandbox_status_hammer_baseline_SiU6.json
+  trades_csv: out/sandbox/sandbox_trades_hammer_baseline_SiU6.csv
+  orders_csv: out/sandbox/sandbox_orders_hammer_baseline_SiU6.csv
+  log: logs/sandbox_hammer_baseline_SiU6.log
+
+# Paper control service this sandbox runner mirrors (read-only reference,
+# never started/stopped/modified by this runner).
+paper_control_service: hammertrade-paper.service

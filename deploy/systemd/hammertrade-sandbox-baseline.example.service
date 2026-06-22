@@ -1,0 +1,32 @@
+# Sandbox order-execution runner — Hammer BASELINE, SiU6 SELL (ADVANCE candidate).
+#
+# SANDBOX CONTOUR ONLY. Places orders via T-Bank SandboxService using
+# SANDBOX_TOKEN + SANDBOX_ACCOUNT_ID_BASELINE from /opt/hammertrade/.env.
+# Never live. real_orders_enabled hardcoded false; runner hard-fails before any
+# API call if env != sandbox or TINVEST_LIVE_TRADING_TOKEN is set.
+#
+# Runs ALONGSIDE hammertrade-sandbox-maxhold5 (separate sandbox account, DB,
+# status, kill-switch) for a clean baseline-vs-maxhold5 comparison at the
+# sandbox-execution stage. Does NOT replace/modify any paper or sandbox service.
+#
+# Install (after approval):
+#   sudo cp deploy/systemd/hammertrade-sandbox-baseline.example.service /etc/systemd/system/hammertrade-sandbox-baseline.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-sandbox-baseline.service
+
+[Unit]
+Description=HammerTrade Sandbox Order Execution — Hammer BASELINE SiU6 SELL (T-Bank sandbox contour, never live)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_hammer_maxhold5_sandbox.py \
+    --config configs/sandbox/hammer_baseline_siu6.yaml
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
