@@ -1,0 +1,56 @@
+experiment:
+  name: multistrategy_r2_sim6
+  ticker: SiM6
+  timezone: Europe/Moscow
+
+data:
+  train_csv: data/raw/tbank/SiM6_1m_2026-01-15_2026-04-10_balanced.csv
+  oos_csv: data/raw/tbank/SiM6_1m_20260501_20260530.csv
+  hammer_trades_csv: out/backtest_exit_time_filters_v2_trades_SiM6_SELL_latest.csv
+
+session:
+  main_session_start: "10:00"
+  time_exit: "18:40"
+  no_overnight: true
+
+commission:
+  rub_per_trade: 38.0
+  point_value_rub: 1.0
+
+slippage_points: [0, 1, 2, 5, 10]
+
+regime:
+  enabled: true
+
+strategies:
+  momentum_continuation:
+    enabled: true
+    atr_window: 14
+    vol_window: 20
+    atr_mult: [1.0, 1.5, 2.0]
+    vol_mult: [1.2, 1.5, 2.0]
+    take_r: [1.0, 1.5, 2.0]
+    direction: SHORT
+    max_trades_per_day: 1
+
+  opening_range_fade:
+    enabled: true
+    or_windows:
+      - ["10:00", "10:30"]
+      - ["10:00", "11:00"]
+    n_return_bars: [3, 5, 10]
+    take_mode: [midpoint, one_r]
+    direction: SHORT_FADE
+    max_trades_per_day: 1
+
+  vwap_reversion:
+    enabled: true
+    distance_mult: [0.5, 1.0, 1.5]
+    stop_mult: [1.0, 1.5]
+    take_mode: [to_vwap, one_r_1_0, one_r_1_5]
+    direction: SHORT
+    max_trades_per_day: 3
+
+  vwap_hammer_filter:
+    enabled: true
+    filters: [baseline, price_above_vwap, high_above_vwap, close_above_vwap_05atr]

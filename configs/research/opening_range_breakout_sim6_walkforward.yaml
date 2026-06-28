@@ -1,0 +1,103 @@
+experiment:
+  name: orb_walkforward_sim6
+  ticker: SiM6
+  timeframe: 1m
+
+data:
+  train_csv: data/raw/tbank/SiM6_1m_2026-01-15_2026-04-10_balanced.csv
+  oos_csv: data/raw/tbank/SiM6_1m_20260501_20260530.csv
+
+session:
+  timezone: Europe/Moscow
+  main_session_start: "10:00"
+  main_session_end: "18:45"
+  no_overnight: true
+
+exit:
+  time_exit: "18:40"
+  max_trades_per_day: 1
+
+entry:
+  mode: breakout_level
+  min_false_breakout_bars: 2
+
+stop:
+  mode: opposite_range
+  min_range_points: 10
+
+commission:
+  rub_per_trade: 38.0
+  point_value_rub: 1.0
+
+regime:
+  enabled: true
+  window_days: 20
+
+slippage:
+  test_pts: [0, 1, 2, 5, 10]
+
+# 7 named scenarios — each is an explicit combination
+# Names: or_window_direction_NR  (e.g. or_60_short_2r)
+scenarios:
+  - name: or_15_long_2r
+    or_start_msk: "10:00"
+    or_end_msk: "10:15"
+    direction: long
+    take_r: 2.0
+
+  - name: or_15_short_2r
+    or_start_msk: "10:00"
+    or_end_msk: "10:15"
+    direction: short
+    take_r: 2.0
+
+  - name: or_30_long_2r
+    or_start_msk: "10:00"
+    or_end_msk: "10:30"
+    direction: long
+    take_r: 2.0
+
+  - name: or_30_short_2r
+    or_start_msk: "10:00"
+    or_end_msk: "10:30"
+    direction: short
+    take_r: 2.0
+
+  - name: or_60_long_2r
+    or_start_msk: "10:00"
+    or_end_msk: "11:00"
+    direction: long
+    take_r: 2.0
+
+  - name: or_60_short_2r
+    or_start_msk: "10:00"
+    or_end_msk: "11:00"
+    direction: short
+    take_r: 2.0
+
+  - name: or_30_short_15r
+    or_start_msk: "10:00"
+    or_end_msk: "10:30"
+    direction: short
+    take_r: 1.5
+
+# Grid for full sweep (used by run_orb_backtest)
+opening_ranges:
+  - ["10:00", "10:15"]
+  - ["10:00", "10:30"]
+  - ["10:00", "11:00"]
+
+directions:
+  - long
+  - short
+
+take:
+  r: [1.5, 2.0]
+
+# Candidate decision thresholds
+candidate:
+  paper_candidate_min_oos_pf: 1.25
+  paper_candidate_min_oos_net: 0.0
+  paper_candidate_max_slip_pts: 2
+  paper_candidate_slip_threshold_pf: 1.1
+  reject_max_oos_pf: 1.0

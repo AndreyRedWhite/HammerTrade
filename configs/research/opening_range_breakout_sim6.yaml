@@ -1,0 +1,46 @@
+experiment:
+  name: opening_range_breakout_sim6
+  ticker: SiM6
+  timeframe: 1m
+
+data:
+  candles_csv: data/raw/tbank/SiM6_1m_2026-01-15_2026-04-10_balanced.csv
+
+session:
+  timezone: Europe/Moscow
+  main_session_start: "10:00"
+  main_session_end: "18:45"
+  no_overnight: true
+  time_exit: "18:40"
+
+opening_ranges:
+  - ["10:00", "10:15"]
+  - ["10:00", "10:30"]
+  - ["10:00", "11:00"]
+
+directions:
+  - long
+  - short
+
+entry:
+  mode: breakout_level
+  min_false_breakout_bars: 2
+
+stop:
+  mode: opposite_range
+  min_range_points: 10
+
+take:
+  r: [1.0, 1.5, 2.0]
+
+exit:
+  time_exit: "18:40"
+  max_trades_per_day: 1
+
+commission:
+  rub_per_trade: 38.0
+  point_value_rub: 1.0
+
+regime:
+  enabled: true
+  window_days: 20
