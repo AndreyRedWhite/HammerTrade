@@ -30,6 +30,23 @@ def paper_net(db, comm_round_trip):
     return reported + n * 0.05 - n * comm_round_trip, n
 
 
+REAL_RATE_PER_LEG = 0.00025  # T-Bank futures, lowest daily-volume tier (0.025%/leg)
+
+
+def paper_net_real_rate(db):
+    """Net PnL applying the REAL 0.025%/leg commission on each trade's actual notional.
+
+    Commission basis = entry price (the broker bills 0.05% of ~price for a round
+    trip, i.e. 0.025% per leg on contract value ~= price RUB). Strips the modeled
+    placeholder commission first.
+    """
+    tr = rows(db, "SELECT pnl_rub, entry_price FROM paper_trades WHERE status='CLOSED'")
+    reported = sum(t["pnl_rub"] or 0 for t in tr)
+    n = len(tr)
+    real_comm = sum(REAL_RATE_PER_LEG * (t["entry_price"] or 0) * 2 for t in tr)  # round trip
+    return reported + n * 0.05 - real_comm, n, real_comm
+
+
 print("PAPER strategies — net PnL vs assumed commission per round-trip (RUB)")
 print(f"{'strategy':28} {'n':>4}  " + "  ".join(f"@{c:>5}" for c in (0.1, 5, 10, 20, 76.4)))
 for name, db in (
@@ -37,7 +54,6 @@ for name, db in (
     ("hammer SELL maxhold5", "data/paper/paper_state_siu6_maxhold5.sqlite"),
     ("hammer BUY long", "data/paper/paper_state_siu6_long.sqlite"),
 ):
-    line = f"{name:28}"
     n0 = None
     cells = []
     for c in (0.1, 5, 10, 20, 76.4):
@@ -47,7 +63,16 @@ for name, db in (
     print(f"{name:28} {n0:>4}  " + "  ".join(cells))
 
 print()
-print("0.05% of ~76000 notional = 38.0 RUB/order = 76.0 RUB/round-trip (the sandbox rate)")
+print("=== REAL RATE: 0.025%/leg = 0.05%/round-trip on actual notional (~price) ===")
+print(f"{'strategy':28} {'n':>4} {'real_comm':>10} {'net_REAL':>10}  (reported@~0 for ref)")
+for name, db in (
+    ("hammer SELL baseline", "data/paper/paper_state_siu6.sqlite"),
+    ("hammer SELL maxhold5", "data/paper/paper_state_siu6_maxhold5.sqlite"),
+    ("hammer BUY long", "data/paper/paper_state_siu6_long.sqlite"),
+):
+    net, n, rc = paper_net_real_rate(db)
+    rep, _ = paper_net(db, 0.1)
+    print(f"{name:28} {n:>4} {-rc:>10.0f} {net:>10.0f}   ({rep:+.0f})")
 print()
 
 # Sandbox baseline: recompute from ACTUAL broker fills + ACTUAL broker commission
