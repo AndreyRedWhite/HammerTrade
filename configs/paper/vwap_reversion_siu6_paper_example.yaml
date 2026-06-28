@@ -1,0 +1,69 @@
+# Example paper config — VWAP Reversion SiU6
+# Scenario: VR_d1.0_s1.0_1.5R (best R2 scenario)
+# DO NOT USE until:
+#   1. run_vwap_reversion_paper_trader.py is implemented
+#   2. Dual-fill accounting is implemented
+#   3. Slippage < 1.5pt confirmed on first paper trades
+# WARNING: edge destroyed at 2pt slippage — market orders NOT acceptable.
+
+experiment:
+  name: vwap_reversion_vr_d1_s1_1_5r
+  strategy: vwap_reversion
+  ticker: SiU6
+  class_code: SPBFUT
+  timeframe: 1m
+  description: "VWAP mean reversion SHORT, distance=1.0×ATR, stop=1.0×ATR, take=1.5R"
+
+vwap:
+  type: anchored_session         # reset at each MSK trading day start
+  typical_price: hlc3            # (high + low + close) / 3
+
+signal:
+  direction: SHORT
+  atr_window: 14
+  distance_mult: 1.0             # enter when close > VWAP + 1.0 × ATR
+  min_bars_after_session_start: 14  # wait for ATR to stabilize
+
+entry:
+  mode: close_of_signal_candle   # entry_price = close of signal candle
+  # NOTE: dual-fill tracking required — also record open of next candle
+
+stop:
+  mode: atr_stop
+  stop_mult: 1.0                 # stop = entry + 1.0 × ATR
+
+take:
+  mode: one_r                    # take = entry - risk * take_r
+  take_r: 1.5
+
+exit:
+  time_exit_msk: "18:40"
+  max_trades_per_day: 3
+  no_overnight: true
+
+fill_tracking:
+  # Required for VWAP reversion to detect execution slippage
+  record_theoretical_fill: true   # close of signal candle
+  record_market_fill: true        # open of next candle
+  slippage_warning_pts: 1.5       # warn if avg fill > this
+
+session:
+  timezone: Europe/Moscow
+  market_hours_config: configs/market_hours/moex_futures.yaml
+
+commission:
+  # SiU6 step value = 1 RUB/point (was wrongly 10). Real commission ~38 RUB/round
+  # trip (0.025%/leg of ~76,400 notional). NB: the live vwap service is configured
+  # via CLI flags (systemd), not this example file.
+  rub_per_trade: 38.0
+  point_value_rub: 1.0
+
+storage:
+  state_db: data/paper/paper_state_siu6_vwap_reversion.sqlite
+  status_file: runtime/paper_status_SiU6_VWAP_REVERSION.json
+  csv_output: out/paper/paper_trades_SiU6_VWAP_REVERSION.csv
+  log_file: logs/paper_SiU6_VWAP_REVERSION.log
+
+orders:
+  orders_enabled: false   # MUST remain false
+  paper_only: true

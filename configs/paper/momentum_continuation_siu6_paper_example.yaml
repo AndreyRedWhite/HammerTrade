@@ -1,0 +1,53 @@
+# Example paper config — Momentum Continuation SiU6
+# Scenario: MC_atr2.0_vol2.0_r2.0 (best R2 scenario)
+# DO NOT USE until run_momentum_paper_trader.py is implemented and tested.
+
+experiment:
+  name: momentum_mc_atr2_vol2_r2
+  strategy: momentum_continuation
+  ticker: SiU6
+  class_code: SPBFUT
+  timeframe: 1m
+  description: "Bearish impulse continuation SHORT, atr_mult=2.0 vol_mult=2.0 take_r=2.0"
+
+signal:
+  direction: SHORT
+  atr_window: 14
+  atr_mult: 2.0          # candle.range >= 2.0 × ATR
+  vol_window: 20
+  vol_mult: 2.0          # volume >= 2.0 × rolling_mean(volume, 20)
+  close_near_low_pct: 0.25  # (close - low) / range <= 0.25
+
+entry:
+  mode: close_of_signal_candle  # entry_price = close of impulse candle
+
+stop:
+  mode: signal_candle_high      # stop_price = high of impulse candle
+
+take:
+  take_r: 2.0                   # take = entry - risk * 2.0
+
+exit:
+  time_exit_msk: "18:40"
+  max_trades_per_day: 1
+  no_overnight: true
+
+session:
+  timezone: Europe/Moscow
+  market_hours_config: configs/market_hours/moex_futures.yaml
+
+commission:
+  # SiU6 step value = 1 RUB/point (was wrongly 10). Real commission ~38 RUB/round
+  # trip (0.025%/leg of ~76,400 notional); engine subtracts rub_per_trade once.
+  rub_per_trade: 38.0
+  point_value_rub: 1.0
+
+storage:
+  state_db: data/paper/paper_state_siu6_momentum.sqlite
+  status_file: runtime/paper_status_SiU6_MOMENTUM.json
+  csv_output: out/paper/paper_trades_SiU6_MOMENTUM.csv
+  log_file: logs/paper_SiU6_MOMENTUM.log
+
+orders:
+  orders_enabled: false   # MUST remain false
+  paper_only: true
