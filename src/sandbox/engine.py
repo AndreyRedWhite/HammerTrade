@@ -112,6 +112,50 @@ def apply_paper_trade_to_sandbox_trade(
     return sandbox_trade
 
 
+def realized_pnl_from_fills(
+    direction: str,
+    entry_fill: float,
+    exit_fill: float,
+    *,
+    point_value_rub: float,
+    qty: int,
+    commission_rub_total: float,
+) -> tuple[float, float]:
+    """Round-trip PnL from ACTUAL broker fills, not idealized engine prices.
+
+    The engine prices a fill at the stop/take/breakout level (+ a modeled
+    slippage tick) and a placeholder commission. The sandbox exists to measure
+    *real* execution, so closed-trade PnL must be recomputed from the broker's
+    avg_fill_price and the broker's reported commission. Returns (gross, net).
+    """
+    if direction == "SELL":
+        gross_points = entry_fill - exit_fill
+    else:
+        gross_points = exit_fill - entry_fill
+    gross = round(gross_points * point_value_rub * qty, 2)
+    net = round(gross - commission_rub_total, 2)
+    return gross, net
+
+
+def raw_slippage(
+    expected: Optional[float],
+    actual: Optional[float],
+    *,
+    point_value_rub: float,
+    qty: int,
+) -> tuple[Optional[float], Optional[float]]:
+    """Signed (actual - expected) fill difference, in points and RUB.
+
+    Pure observability — how far the broker fill landed from the price the
+    engine assumed. Sign is raw (no per-side cost interpretation); the
+    authoritative cost lives in the recomputed net PnL.
+    """
+    if expected is None or actual is None:
+        return None, None
+    pts = round(actual - expected, 4)
+    return pts, round(pts * point_value_rub * qty, 2)
+
+
 def expected_position_from_trade(open_trade: Optional[SandboxTrade]) -> PositionView:
     """Map the bot's open SandboxTrade (if any) to the expected sandbox account position."""
     if open_trade is None or open_trade.status != SandboxTradeStatus.OPEN:

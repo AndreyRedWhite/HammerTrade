@@ -69,10 +69,25 @@ def _age_str(ts_str: str | None, now: datetime) -> tuple[str, float | None]:
     return f"{secs/3600:.1f}h ago", secs
 
 
+# Trading halts (sandbox). A halt that nobody notices = a silently dead
+# service (e.g. the consecutive-loss pause that kept the sandbox offline for
+# days). Daily-scoped pauses now self-heal each trading day, so any halt seen
+# here is either a hard halt awaiting manual review or a reset that failed to
+# fire — both worth flagging loudly.
+_HALT_STATES = {
+    "KILL_SWITCH_ACTIVE": "KILLED",
+    "RECONCILIATION_FAILED": "RECON_FAIL",
+    "TRADING_PAUSED": "PAUSED",
+}
+
+
 def _health(status: dict, age_sec: float | None, stale_sec: int) -> str:
-    """Normalize health across schemas → OK / DEGRADED / STALLED / <fetch_status>."""
+    """Normalize health across schemas → OK / PAUSED / DEGRADED / STALLED / <fetch_status>."""
     market_open = status.get("market_open", True)
     fetch = _first(status, "fetch_status", "last_fetch_status", default="")
+    halt = _HALT_STATES.get(status.get("trading_state", ""))
+    if halt:
+        return halt
     live = status.get("trading_liveness_status")
     if live and live != "OK":
         return live
@@ -107,6 +122,7 @@ def _summarize(status: dict, now: datetime, stale_sec: int) -> dict:
         "closed": closed,
         "open": open_n,
         "pnl": pnl,
+        "pause_reason": status.get("trading_paused_reason"),
     }
 
 
@@ -222,7 +238,9 @@ def main() -> int:
             continue
         if s["health"] != "OK":
             exit_code = 1
-            degraded.append((name, s["health"]))
+            reason = s.get("pause_reason")
+            label = s["health"] + (f" ({reason})" if reason and s["health"] == "PAUSED" else "")
+            degraded.append((name, label))
         pnl_str = f"{s['pnl']:.0f}" if isinstance(s["pnl"], (int, float)) else str(s["pnl"])
         mkt = "" if s["market_open"] else " (mkt closed)"
         print(f"{name:<30}{s['label']:<20}{s['strat']:<11}{s['dir']:<6}"

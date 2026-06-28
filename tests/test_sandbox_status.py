@@ -86,6 +86,18 @@ def test_write_sandbox_status_atomic(tmp_path):
     assert not (out.parent / (out.name + ".tmp")).exists()
 
 
+def test_build_sandbox_status_carries_pause_reason():
+    # Surfaced so the fleet check can show WHY a service is paused.
+    status = _base_status(
+        trading_state="TRADING_PAUSED",
+        trading_paused_reason="max_exit_retries_exceeded",
+    )
+    assert status["trading_state"] == "TRADING_PAUSED"
+    assert status["trading_paused_reason"] == "max_exit_retries_exceeded"
+    # default when not paused
+    assert _base_status()["trading_paused_reason"] is None
+
+
 def test_build_sandbox_status_risk_fields():
     status = _base_status(
         daily_pnl_rub=-150.5,

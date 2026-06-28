@@ -40,7 +40,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config import load_params
 from src.strategy.hammer_detector import HammerDetector
 from src.sandbox.broker import get_sandbox_broker
-from src.sandbox.engine import expected_position_from_trade, process_sandbox_candle
+from src.sandbox.engine import (
+    expected_position_from_trade,
+    process_sandbox_candle,
+    raw_slippage,
+    realized_pnl_from_fills,
+)
 from src.sandbox.models import (
     SandboxFill,
     SandboxOrder,
@@ -447,6 +452,7 @@ def _write_status(
         reconciliation_status=reconciliation_status or risk_state.reconciliation_status,
         market_open=market_open,
         consecutive_api_errors=cycle_state.get("api_errors", 0),
+        trading_paused_reason=risk_state.trading_paused_reason,
         last_successful_fetch_at=cycle_state.get("last_successful_fetch_at"),
         market_open_since=cycle_state.get("market_open_at"),
         last_successful_reconciliation_at=cycle_state.get("last_successful_reconciliation_at"),
@@ -458,7 +464,7 @@ def _write_status(
     write_sandbox_status(status, ctx.status_path)
 
 
-def _handle_entry(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, risk_state, daily) -> None:
+def _handle_entry(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, risk_state, daily, point_value_rub: float = 10.0) -> None:
     repo = ctx.repo
     logger = ctx.logger
     ticker = ctx.ticker
@@ -534,6 +540,15 @@ def _handle_entry(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ri
     order.avg_fill_price = result.executed_price
     order.commission_rub = result.commission_rub
 
+    # Record entry slippage (actual fill vs engine-expected) and anchor the
+    # trade to the REAL fill so closed-trade PnL reflects actual execution.
+    if result.executed_price is not None:
+        order.slippage_points, order.slippage_rub = raw_slippage(
+            trade.entry_price, result.executed_price,
+            point_value_rub=point_value_rub, qty=trade.qty,
+        )
+        trade.entry_price = result.executed_price
+
     trade.entry_order_id = order_id
 
     repo.insert_order(order)
@@ -566,7 +581,7 @@ def _handle_entry(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ri
     logger.info(f"ENTRY trade_id={trade.trade_id} order={order_id} status={order.status.value} qty={trade.qty}")
 
 
-def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, risk_state, daily) -> None:
+def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, risk_state, daily, point_value_rub: float = 10.0) -> None:
     repo = ctx.repo
     logger = ctx.logger
     ticker = ctx.ticker
@@ -650,6 +665,28 @@ def _handle_exit(ctx: RunnerContext, cycle_state: dict, trade: SandboxTrade, ris
     order.avg_fill_price = result.executed_price
     order.commission_rub = result.commission_rub
 
+    # Recompute closed-trade PnL from REAL fills + REAL broker commission. The
+    # engine set an idealized exit_price/pnl with a placeholder commission; the
+    # sandbox must reflect what the broker actually filled and charged. Also
+    # record exit slippage vs the engine-expected exit price.
+    if result.executed_price is not None:
+        order.slippage_points, order.slippage_rub = raw_slippage(
+            trade.exit_price, result.executed_price,
+            point_value_rub=point_value_rub, qty=trade.qty,
+        )
+        entry_order = repo.get_order(trade.entry_order_id) if trade.entry_order_id else None
+        entry_comm = (entry_order.commission_rub or 0.0) if entry_order else 0.0
+        real_comm = round(entry_comm + (result.commission_rub or 0.0), 2)
+        trade.exit_price = result.executed_price  # trade.entry_price is already the real entry fill
+        gross, net = realized_pnl_from_fills(
+            trade.direction, trade.entry_price, trade.exit_price,
+            point_value_rub=point_value_rub, qty=trade.qty,
+            commission_rub_total=real_comm,
+        )
+        trade.gross_pnl_rub = gross
+        trade.commission_rub = real_comm
+        trade.net_pnl_rub = net
+
     trade.exit_order_id = order_id
 
     repo.insert_order(order)
@@ -705,12 +742,13 @@ def _process_one_candle(ctx: RunnerContext, cycle_state: dict, candle: pd.Series
 
     _save_pending_signal(repo, result.pending_signal, ticker)
 
+    point_value_rub = engine_kwargs.get("point_value_rub", 10.0)
     if result.decision == "ENTRY":
-        _handle_entry(ctx, cycle_state, result.trade, risk_state, daily)
+        _handle_entry(ctx, cycle_state, result.trade, risk_state, daily, point_value_rub)
     elif result.decision == "HOLD":
         repo.update_trade(result.trade)
     elif result.decision == "EXIT":
-        _handle_exit(ctx, cycle_state, result.trade, risk_state, daily)
+        _handle_exit(ctx, cycle_state, result.trade, risk_state, daily, point_value_rub)
 
 
 def _reconcile(ctx: RunnerContext, cycle_state: dict) -> int:

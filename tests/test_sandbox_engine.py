@@ -10,6 +10,8 @@ import pandas as pd
 from src.sandbox.engine import (
     expected_position_from_trade,
     process_sandbox_candle,
+    raw_slippage,
+    realized_pnl_from_fills,
 )
 from src.sandbox.models import SandboxExitReason, SandboxTradeStatus
 from src.sandbox.reconciliation import PositionView
@@ -183,3 +185,48 @@ def test_expected_position_from_trade():
 
     open_trade.status = SandboxTradeStatus.CLOSED
     assert expected_position_from_trade(open_trade) == PositionView("FLAT", 0)
+
+
+def test_realized_pnl_from_fills_sell():
+    # SELL profits when exit fill < entry fill.
+    gross, net = realized_pnl_from_fills(
+        "SELL", entry_fill=76330.0, exit_fill=76310.0,
+        point_value_rub=10.0, qty=1, commission_rub_total=76.4,
+    )
+    assert gross == 200.0  # (76330-76310)*10
+    assert net == 123.6    # 200 - 76.4
+
+
+def test_realized_pnl_from_fills_buy_loss():
+    gross, net = realized_pnl_from_fills(
+        "BUY", entry_fill=100.0, exit_fill=90.0,
+        point_value_rub=10.0, qty=2, commission_rub_total=5.0,
+    )
+    assert gross == -200.0  # (90-100)*10*2
+    assert net == -205.0
+
+
+def test_realized_pnl_uses_actual_fills_not_idealized():
+    # An adverse exit fill (worse than the engine-expected take) reduces PnL.
+    ideal_gross, _ = realized_pnl_from_fills(
+        "SELL", 76393.0, 76339.0, point_value_rub=10.0, qty=1, commission_rub_total=0.0,
+    )
+    real_gross, _ = realized_pnl_from_fills(
+        "SELL", 76393.0, 76360.0, point_value_rub=10.0, qty=1, commission_rub_total=0.0,
+    )
+    assert ideal_gross == 540.0
+    assert real_gross == 330.0  # 21pt of adverse exit slippage costs 210 RUB
+
+
+def test_raw_slippage_signed():
+    pts, rub = raw_slippage(76330.0, 76345.0, point_value_rub=10.0, qty=1)
+    assert pts == 15.0
+    assert rub == 150.0
+    pts, rub = raw_slippage(76330.0, 76300.0, point_value_rub=10.0, qty=2)
+    assert pts == -30.0
+    assert rub == -600.0
+
+
+def test_raw_slippage_handles_missing():
+    assert raw_slippage(None, 100.0, point_value_rub=10.0, qty=1) == (None, None)
+    assert raw_slippage(100.0, None, point_value_rub=10.0, qty=1) == (None, None)
