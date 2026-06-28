@@ -224,6 +224,58 @@ def test_reset_exit_errors(tmp_path):
     assert state.exit_error_count == 0
 
 
+def test_reset_for_new_day_lifts_consecutive_loss_pause(tmp_path):
+    # The daily circuit breaker must lift on a new trading day; otherwise a
+    # positive-expectancy strategy stays disabled forever after a losing streak.
+    rm = RiskManager(_limits(tmp_path, max_consecutive_losses=3))
+    state = SandboxRiskState(
+        consecutive_losses=3,
+        trading_paused=True,
+        trading_paused_reason="max_consecutive_losses_exceeded",
+    )
+
+    state, changed = rm.reset_for_new_day(state)
+    assert changed is True
+    assert state.consecutive_losses == 0
+    assert state.trading_paused is False
+    assert state.trading_paused_reason is None
+    # and trading is allowed again
+    assert rm.check_pre_trade(risk_state=state, daily_risk=_daily(), open_positions=0).allowed is True
+
+
+def test_reset_for_new_day_lifts_daily_loss_pause(tmp_path):
+    rm = RiskManager(_limits(tmp_path))
+    state = SandboxRiskState(trading_paused=True, trading_paused_reason="max_daily_loss_exceeded")
+
+    state, changed = rm.reset_for_new_day(state)
+    assert changed is True
+    assert state.trading_paused is False
+    assert state.trading_paused_reason is None
+
+
+def test_reset_for_new_day_keeps_hard_halts(tmp_path):
+    # Technical/cumulative halts must survive the daily rollover (manual review).
+    rm = RiskManager(_limits(tmp_path))
+    for reason in (
+        "max_total_loss_exceeded",
+        "max_exit_retries_exceeded",
+        "max_consecutive_errors_exceeded",
+        "reconciliation_failed",
+    ):
+        state = SandboxRiskState(trading_paused=True, trading_paused_reason=reason)
+        state, _ = rm.reset_for_new_day(state)
+        assert state.trading_paused is True, reason
+        assert state.trading_paused_reason == reason
+
+
+def test_reset_for_new_day_noop_when_clean(tmp_path):
+    rm = RiskManager(_limits(tmp_path))
+    state = _state()
+    state, changed = rm.reset_for_new_day(state)
+    assert changed is False
+    assert state.trading_paused is False
+
+
 def test_exit_error_count_independent_of_consecutive_errors(tmp_path):
     # Exit retries must not be conflated with entry-side consecutive_errors.
     rm = RiskManager(_limits(tmp_path, max_exit_retries=5, max_consecutive_errors=3))

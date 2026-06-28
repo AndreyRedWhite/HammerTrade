@@ -346,6 +346,39 @@ def _build_context(cfg: dict, dry_run: bool, logger: logging.Logger) -> RunnerCo
     )
 
 
+def _day_key() -> str:
+    return "last_active_day"
+
+
+def _maybe_reset_for_new_day(ctx: "RunnerContext", now_utc: datetime) -> None:
+    """At the first market-open cycle of a new trading day, lift daily-scoped
+    risk halts (consecutive-loss / daily-loss circuit breakers).
+
+    Without this the pause set by ``max_consecutive_losses`` is sticky forever,
+    so the strategy never resumes after a normal losing streak. The stored day
+    is also unset on a freshly deployed DB, so this self-heals an already-stuck
+    pause on the next trading day.
+    """
+    repo = ctx.repo
+    if repo is None:
+        return
+    today = _today_msk(now_utc)
+    if repo.get_state(_day_key()) == today:
+        return  # same trading day — keep any intraday breaker in force
+
+    risk_state = repo.load_risk_state()
+    _, changed = ctx.risk_manager.reset_for_new_day(risk_state)
+    if changed:
+        repo.save_risk_state(risk_state)
+        msg = "DAILY_RESET new trading day — daily-scoped risk halts lifted"
+        ctx.logger.info(msg)
+        repo.insert_event(
+            event_id=f"daily_reset:{today}", ticker=ctx.ticker,
+            event_type="DAILY_RESET", message=msg,
+        )
+    repo.set_state(_day_key(), today)
+
+
 def _compute_trading_state(risk_state, open_trade, pending_signal, kill_switch_active) -> str:
     if kill_switch_active:
         return "KILL_SWITCH_ACTIVE"
@@ -765,6 +798,9 @@ def _run_cycle(ctx: RunnerContext, cycle_state: dict) -> None:
                 market_open=False, kill_switch_active=kill_switch_active,
             )
             return
+
+    # ── New-trading-day rollover: lift daily-scoped risk halts ───────────────
+    _maybe_reset_for_new_day(ctx, now_utc)
 
     # ── Fetch candles (env=prod / READONLY_TOKEN) ────────────────────────────
     logger.info(f"Fetching {ctx.lookback_candles} candles for {ticker} {timeframe}...")

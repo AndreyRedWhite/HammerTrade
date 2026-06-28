@@ -57,7 +57,12 @@ risk:
   max_total_loss_rub: 10000
   max_trades_per_day: 50
   max_consecutive_errors: 3
-  max_consecutive_losses: 3
+  # Daily circuit breaker (reset each trading day, see risk.reset_for_new_day).
+  # Set to a genuine-anomaly level: at WR ~55% P(6 losses) ~0.8%, so it guards
+  # against a broken strategy without tripping on ordinary variance (the old
+  # value of 3 fired ~9% of the time and, before the daily reset, permanently
+  # disabled the strategy mid-drawdown).
+  max_consecutive_losses: 6
   max_open_positions_per_strategy: 1
   # Consecutive failed closing-order attempts for one open position before the
   # strategy pauses (exits bypass the pre-trade checks, so without this an

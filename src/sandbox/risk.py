@@ -15,6 +15,22 @@ from src.sandbox.models import (
 )
 
 
+# Pause reasons that are *daily* circuit breakers: they should halt trading
+# for the rest of the day they trip on, then lift automatically on the next
+# trading day. Without this lift the pause is sticky forever, so a
+# positive-expectancy strategy permanently disables itself on an ordinary
+# losing streak (e.g. P(3 losses) ~9% at WR 55%) and never participates in the
+# recovery — which is exactly why the sandbox booked a steady net loss while
+# the paper control (which has no such breaker) stayed profitable.
+#
+# All other pause reasons (reconciliation_failed, max_total_loss_exceeded,
+# max_exit_retries_exceeded, max_consecutive_errors) are technical/hard halts
+# that require manual review and are NOT auto-cleared here.
+DAILY_RESETTABLE_PAUSE_REASONS = frozenset(
+    {"max_consecutive_losses_exceeded", "max_daily_loss_exceeded"}
+)
+
+
 @dataclass(frozen=True)
 class RiskLimits:
     capital_budget_rub: float
@@ -150,6 +166,30 @@ class RiskManager:
             risk_state.trading_paused_reason = "max_consecutive_losses_exceeded"
 
         return risk_state, daily_risk
+
+    def reset_for_new_day(self, risk_state: SandboxRiskState) -> tuple[SandboxRiskState, bool]:
+        """Lift daily-scoped risk halts at the start of a new trading day.
+
+        The consecutive-loss counter is a *daily* circuit-breaker input, so it
+        resets each trading day. If trading is paused for a daily-scoped reason
+        (see DAILY_RESETTABLE_PAUSE_REASONS) the pause is lifted too; hard halts
+        are left in place for manual review.
+
+        Returns (risk_state, changed) where ``changed`` is True if anything was
+        cleared (so the caller can log/persist only when needed).
+        """
+        changed = False
+        if risk_state.consecutive_losses != 0:
+            risk_state.consecutive_losses = 0
+            changed = True
+        if (
+            risk_state.trading_paused
+            and risk_state.trading_paused_reason in DAILY_RESETTABLE_PAUSE_REASONS
+        ):
+            risk_state.trading_paused = False
+            risk_state.trading_paused_reason = None
+            changed = True
+        return risk_state, changed
 
     def update_after_error(self, risk_state: SandboxRiskState) -> SandboxRiskState:
         risk_state.consecutive_errors += 1
