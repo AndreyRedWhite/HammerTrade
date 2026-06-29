@@ -1,0 +1,34 @@
+[Unit]
+Description=HammerTrade Pairs Stat-Arb — RTKMP/RTKM 15m (paper, real-price fill tracking, no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_paper_trader.py \
+    --pairs RTKMP:RTKM \
+    --class-code TQBR \
+    --bar-timeframe 15m \
+    --z-window 80 \
+    --entry-z 2.0 \
+    --exit-z 0.5 \
+    --stop-z 4.0 \
+    --max-hold-bars 150 \
+    --notional-per-leg 50000 \
+    --cost-bps-per-leg-side 7.0 \
+    --experiment-name pairs_rtkm_15m_e2.0_x0.5 \
+    --state-db data/paper/paper_state_pairs_rtkm.sqlite \
+    --status-file runtime/paper_status_PAIRS_RTKM.json \
+    --csv-output out/paper/paper_trades_PAIRS_RTKM.csv \
+    --log-file logs/paper_PAIRS_RTKM.log \
+    --market-hours-config configs/market_hours/moex_equities.yaml \
+    --poll-interval-seconds 300 \
+    --api-timeout-sec 15
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
