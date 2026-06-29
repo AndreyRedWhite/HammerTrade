@@ -61,6 +61,13 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--trading-enabled-env", default="SANDBOX_TRADING_ENABLED",
                    help="Env var that must be 'true' to place orders (isolate from other sandbox services)")
     p.add_argument("--max-trades-per-day", type=int, default=20)
+    p.add_argument("--order-type", choices=["market", "limit"], default="market",
+                   help="market = cross the spread (baseline); limit = passive @ bar-close, "
+                        "poll+cancel, exits fall back to market. v1: validate vs market at open.")
+    p.add_argument("--limit-timeout-sec", type=float, default=20.0,
+                   help="How long to wait for a LIMIT leg to fill before cancel/abort (entry) "
+                        "or market-fallback (exit).")
+    p.add_argument("--limit-poll-sec", type=float, default=2.0)
     p.add_argument("--state-db", default="data/sandbox/sandbox_pairs.sqlite")
     p.add_argument("--status-file", default="runtime/sandbox_status_PAIRS.json")
     p.add_argument("--log-file", default="logs/sandbox_PAIRS.log")
@@ -199,32 +206,77 @@ def _qty_lots(notional: float, price: float, lot: int) -> int:
     return max(lots, 1)
 
 
-def _place(broker, account_id, uid, lots, side, dry_run, logger, tag):
-    """Place one market order. Returns (fill_price, commission, executed_lots) or (None,None,0)."""
+def _place(broker, account_id, uid, lots, side, dry_run, logger, tag,
+           order_type="market", limit_price=None, timeout_sec=20.0, poll_sec=2.0,
+           force_fill=False):
+    """Place one order leg. Returns (avg_fill_price, total_commission, executed_lots).
+
+    market: single MARKET order (crosses the spread).
+    limit:  passive LIMIT @ limit_price; poll up to timeout_sec; cancel remainder.
+            If force_fill (exits, which MUST close), market-fallback the unfilled remainder.
+    """
     if dry_run:
-        logger.info(f"DRY_ORDER {tag} side={side} uid={uid} lots={lots}")
-        return None, None, lots
+        logger.info(f"DRY_ORDER {tag} side={side} type={order_type} price={limit_price} lots={lots}")
+        return (limit_price if order_type == "limit" else None), 0.0, lots
+
+    if order_type == "limit" and limit_price is not None:
+        res = broker.post_order(account_id=account_id, instrument_uid=uid, quantity_lots=lots,
+                                direction=side, order_type="LIMIT", price=limit_price,
+                                idempotency_key=str(uuid.uuid4()))
+        order_id = res.order_id
+        filled = res.lots_executed or 0
+        fill_px = res.executed_price
+        comm = res.commission_rub or 0.0
+        deadline = time.time() + timeout_sec
+        while filled < lots and time.time() < deadline:
+            time.sleep(poll_sec)
+            st = broker.get_order_state(account_id, order_id)
+            filled = st.lots_executed or filled
+            fill_px = st.executed_price or fill_px
+            comm = st.commission_rub or comm
+        if filled < lots:
+            try:
+                broker.cancel_order(account_id, order_id)
+            except Exception as e:
+                logger.warning(f"CANCEL_FAIL {tag}: {e}")
+            if force_fill and (lots - filled) > 0:
+                m = broker.post_order(account_id=account_id, instrument_uid=uid,
+                                      quantity_lots=lots - filled, direction=side,
+                                      order_type="MARKET", idempotency_key=str(uuid.uuid4()))
+                mf = m.lots_executed or 0
+                if mf > 0:
+                    mpx = m.executed_price or limit_price
+                    fill_px = ((fill_px or mpx) * filled + mpx * mf) / max(filled + mf, 1)
+                    comm += m.commission_rub or 0.0
+                    filled += mf
+                logger.info(f"LIMIT_TO_MARKET {tag} fallback mkt_filled={mf} px={m.executed_price}")
+        logger.info(f"ORDER {tag} LIMIT@{limit_price} side={side} lots={lots} filled={filled} "
+                    f"avg_px={fill_px} comm={comm}")
+        return fill_px, comm, filled
+
     res = broker.post_order(account_id=account_id, instrument_uid=uid,
                             quantity_lots=lots, direction=side, order_type="MARKET",
                             idempotency_key=str(uuid.uuid4()))
     filled = res.lots_executed or 0
-    logger.info(f"ORDER {tag} side={side} lots={lots} status={res.status} "
+    logger.info(f"ORDER {tag} MARKET side={side} lots={lots} status={res.status} "
                 f"filled={filled} price={res.executed_price} comm={res.commission_rub}")
-    if "FILL" not in (res.status or "") or filled < lots:
-        return res.executed_price, res.commission_rub, filled
     return res.executed_price, res.commission_rub, filled
 
 
 def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, direction,
-               pref_uid, ord_uid, pref_lot, ord_lot, pref_px, ord_px, notional, z, ts):
-    """Enter a pair: two market orders. Flattens the first leg if the second fails."""
+               pref_uid, ord_uid, pref_lot, ord_lot, pref_px, ord_px, notional, z, ts,
+               order_type="market", limit_timeout=20.0, limit_poll=2.0):
+    """Enter a pair: two orders. Flattens the first leg if the second fails.
+    In limit mode the legs are passive @ bar-close; an unfilled entry leg aborts (no force)."""
     pref_lots = _qty_lots(notional, pref_px, pref_lot)
     ord_lots = _qty_lots(notional, ord_px, ord_lot)
     # LONG_SPREAD: BUY pref, SELL ord.  SHORT_SPREAD: SELL pref, BUY ord.
     pref_side = "BUY" if direction == "LONG_SPREAD" else "SELL"
     ord_side = "SELL" if direction == "LONG_SPREAD" else "BUY"
 
-    pf, pc, pfl = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger, f"{pair}/ENTRY/pref")
+    pf, pc, pfl = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger,
+                         f"{pair}/ENTRY/pref", order_type=order_type, limit_price=pref_px,
+                         timeout_sec=limit_timeout, poll_sec=limit_poll)
     if not dry_run and pfl < pref_lots:
         logger.error(f"ENTRY_LEG1_FAIL pair={pair} pref filled={pfl}/{pref_lots}; flattening")
         if pfl > 0:
@@ -232,7 +284,9 @@ def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, dir
                    dry_run, logger, f"{pair}/UNWIND/pref")
         db.event(pair, "ENTRY_ABORT", f"leg1 partial {pfl}/{pref_lots}")
         return None
-    of, oc, ofl = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger, f"{pair}/ENTRY/ord")
+    of, oc, ofl = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger,
+                         f"{pair}/ENTRY/ord", order_type=order_type, limit_price=ord_px,
+                         timeout_sec=limit_timeout, poll_sec=limit_poll)
     if not dry_run and ofl < ord_lots:
         logger.error(f"ENTRY_LEG2_FAIL pair={pair} ord filled={ofl}/{ord_lots}; flattening BOTH")
         _place(broker, account_id, pref_uid, pref_lots, "SELL" if pref_side == "BUY" else "BUY",
@@ -262,15 +316,21 @@ def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, dir
 
 
 def _close_pair(broker, account_id, db, logger, dry_run, *, t, pref_uid, ord_uid,
-                pref_lot, ord_lot, pref_px, ord_px, z, ts, reason):
+                pref_lot, ord_lot, pref_px, ord_px, z, ts, reason,
+                order_type="market", limit_timeout=20.0, limit_poll=2.0):
     direction = t["direction"]
     pref_lots = t["pref_qty"] // pref_lot
     ord_lots = t["ord_qty"] // ord_lot
     # reverse of entry
     pref_side = "SELL" if direction == "LONG_SPREAD" else "BUY"
     ord_side = "BUY" if direction == "LONG_SPREAD" else "SELL"
-    pf, pc, _ = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger, f"{t['pair']}/EXIT/pref")
-    of, oc, _ = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger, f"{t['pair']}/EXIT/ord")
+    # exits MUST close → force_fill (limit then market-fallback)
+    pf, pc, _ = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger,
+                       f"{t['pair']}/EXIT/pref", order_type=order_type, limit_price=pref_px,
+                       timeout_sec=limit_timeout, poll_sec=limit_poll, force_fill=True)
+    of, oc, _ = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger,
+                       f"{t['pair']}/EXIT/ord", order_type=order_type, limit_price=ord_px,
+                       timeout_sec=limit_timeout, poll_sec=limit_poll, force_fill=True)
     pref_exit = pf if pf is not None else pref_px
     ord_exit = of if of is not None else ord_px
 
@@ -336,7 +396,9 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
                     t = _open_pair(broker, account_id, db, logger, dry_run, pair=pair, pref=pref, ordn=ordn,
                                    direction=direction, pref_uid=pref_i["uid"], ord_uid=ord_i["uid"],
                                    pref_lot=pref_i["lot"], ord_lot=ord_i["lot"], pref_px=pref_px, ord_px=ord_px,
-                                   notional=args.notional_per_leg, z=z, ts=ts)
+                                   notional=args.notional_per_leg, z=z, ts=ts,
+                                   order_type=args.order_type, limit_timeout=args.limit_timeout_sec,
+                                   limit_poll=args.limit_poll_sec)
                     if t is not None:
                         open_t = t
                         db.bump_trades_today(date_msk)
@@ -355,7 +417,9 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
                 _close_pair(broker, account_id, db, logger, dry_run, t=open_t,
                             pref_uid=pref_i["uid"], ord_uid=ord_i["uid"],
                             pref_lot=pref_i["lot"], ord_lot=ord_i["lot"],
-                            pref_px=pref_px, ord_px=ord_px, z=z, ts=ts, reason=reason)
+                            pref_px=pref_px, ord_px=ord_px, z=z, ts=ts, reason=reason,
+                            order_type=args.order_type, limit_timeout=args.limit_timeout_sec,
+                            limit_poll=args.limit_poll_sec)
                 open_t = None
 
         db.set_last_bar(pair, ts)
@@ -376,7 +440,7 @@ def _write_status(args, db, pair_results, market_open, session, fetch_status, ac
         "account_id": account_id, "pairs": args.pairs,
         "params": {"z_window": args.z_window, "entry_z": args.entry_z, "exit_z": args.exit_z,
                    "stop_z": args.stop_z, "max_hold_bars": args.max_hold_bars,
-                   "notional_per_leg": args.notional_per_leg},
+                   "notional_per_leg": args.notional_per_leg, "order_type": args.order_type},
         "market_open": market_open, "session": session, "fetch_status": fetch_status,
         "per_pair": pair_results, "open_trades_total": len(db.all_open()),
         "closed_trades_total": len(closed), "wins": wins,

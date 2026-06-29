@@ -223,6 +223,12 @@ class SandboxBroker:
             commission_rub=_money_to_float(getattr(response, "initial_commission", None)),
         )
 
+    def cancel_order(self, account_id: str, order_id: str) -> None:
+        """Cancel a working sandbox order (e.g. an unfilled LIMIT). Idempotent-ish:
+        the API may raise if the order is already filled/cancelled — caller should
+        treat exceptions as best-effort."""
+        self._client.sandbox.cancel_sandbox_order(account_id=account_id, order_id=order_id)
+
 
 @contextmanager
 def get_sandbox_broker():
