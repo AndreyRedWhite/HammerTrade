@@ -1,0 +1,33 @@
+[Unit]
+Description=HammerTrade Pairs Stat-Arb SANDBOX — MTLRP/MTLR 60m (T-Bank sandbox contour, virtual money, REAL fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_sandbox_trader.py \
+    --pairs MTLRP:MTLR@1h \
+    --class-code TQBR \
+    --z-window 50 \
+    --entry-z 2.0 \
+    --exit-z 0.5 \
+    --stop-z 4.0 \
+    --max-hold-bars 45 \
+    --notional-per-leg 20000 \
+    --account-id-env SANDBOX_ACCOUNT_ID_PAIRS \
+    --trading-enabled-env SANDBOX_PAIRS_ENABLED \
+    --max-trades-per-day 20 \
+    --state-db data/sandbox/sandbox_pairs_mtlr.sqlite \
+    --status-file runtime/sandbox_status_PAIRS_MTLR.json \
+    --log-file logs/sandbox_PAIRS_MTLR.log \
+    --market-hours-config configs/market_hours/moex_equities.yaml \
+    --poll-interval-seconds 300 \
+    --api-timeout-sec 15
+Restart=always
+RestartSec=15
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
