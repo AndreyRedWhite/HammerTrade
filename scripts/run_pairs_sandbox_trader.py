@@ -356,6 +356,30 @@ def _close_pair(broker, account_id, db, logger, dry_run, *, t, pref_uid, ord_uid
     return upd
 
 
+# ───────────────────────── reconciliation ─────────────────────────
+def _reconcile(broker, account_id, open_t, pref_i, ord_i, pref_lot, ord_lot):
+    """Compare expected positions (from the journal) vs actual (sandbox account) for
+    THIS pair's two legs only. Disjoint instruments → safe on a shared account.
+    Returns (ok: bool, detail: str). Positions are signed lot balances."""
+    exp = {pref_i["uid"]: 0, ord_i["uid"]: 0}
+    if open_t is not None and str(open_t.get("status")) == "OPEN":
+        d = open_t["direction"]
+        pl = int(open_t["pref_qty"]) // pref_lot
+        ol = int(open_t["ord_qty"]) // ord_lot
+        exp[pref_i["uid"]] = pl if d == "LONG_SPREAD" else -pl
+        exp[ord_i["uid"]] = -ol if d == "LONG_SPREAD" else ol
+    figi_to_uid = {i["figi"]: i["uid"] for i in (pref_i, ord_i) if i.get("figi")}
+    actual = {pref_i["uid"]: 0, ord_i["uid"]: 0}
+    for p in broker.get_positions(account_id):
+        uid = p.instrument_uid or figi_to_uid.get(p.figi)
+        if uid in actual:
+            actual[uid] = int(p.balance)
+    mism = [(u, exp[u], actual[u]) for u in exp if exp[u] != actual[u]]
+    if mism:
+        return False, "; ".join(f"uid={u[:8]} exp_lots={e} act_lots={a}" for u, e, a in mism)
+    return True, "OK"
+
+
 # ───────────────────────── per-pair cycle ─────────────────────────
 def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
                   pref, ordn, tf, dry_run):
@@ -378,6 +402,19 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
 
     open_t = db.open_trade(pair)
     open_t = dict(open_t) if open_t is not None else None
+    latest_z = float(pdf["z"].iloc[-1])
+
+    # Position reconciliation: journal vs real account (skip in dry-run). On any
+    # mismatch, HALT this pair (no new entries/exits) and alert — manual fix needed.
+    if not dry_run:
+        ok, detail = _reconcile(broker, account_id, open_t, pref_i, ord_i,
+                                pref_i["lot"], ord_i["lot"])
+        if not ok:
+            logger.error(f"RECONCILE_FAIL pair={pair} {detail}")
+            db.event(pair, "RECONCILE_FAIL", detail)
+            return {"pair": pair, "status": "RECONCILE_FAILED", "detail": detail,
+                    "latest_z": round(latest_z, 3), "has_open": open_t is not None}
+
     date_msk = _today_msk(now_utc)
     daily = db.daily(date_msk)
 
