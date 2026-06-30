@@ -364,8 +364,10 @@ def _reconcile(broker, account_id, open_t, pref_i, ord_i, pref_lot, ord_lot):
     exp = {pref_i["uid"]: 0, ord_i["uid"]: 0}
     if open_t is not None and str(open_t.get("status")) == "OPEN":
         d = open_t["direction"]
-        pl = int(open_t["pref_qty"]) // pref_lot
-        ol = int(open_t["ord_qty"]) // ord_lot
+        # Sandbox SECURITIES position balance is in UNITS (shares), not lots — so
+        # compare against pref_qty/ord_qty (already shares), NOT shares//lot.
+        pl = int(open_t["pref_qty"])
+        ol = int(open_t["ord_qty"])
         exp[pref_i["uid"]] = pl if d == "LONG_SPREAD" else -pl
         exp[ord_i["uid"]] = -ol if d == "LONG_SPREAD" else ol
     figi_to_uid = {i["figi"]: i["uid"] for i in (pref_i, ord_i) if i.get("figi")}
