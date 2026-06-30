@@ -1,0 +1,33 @@
+[Unit]
+Description=HammerTrade ORB SHORT SANDBOX — SiU6 filtered (T-Bank sandbox contour, virtual money, REAL fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orb_sandbox_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --or-start 10:00 \
+    --or-end 11:00 \
+    --time-exit 18:40 \
+    --take-r 3.0 \
+    --max-or-range 500 \
+    --breakout-vol-mult 2.0 \
+    --contracts 1 \
+    --account-id-env SANDBOX_ACCOUNT_ID_ORB \
+    --trading-enabled-env SANDBOX_ORB_ENABLED \
+    --state-db data/sandbox/sandbox_orb_siu6.sqlite \
+    --status-file runtime/sandbox_status_ORB_SIU6.json \
+    --log-file logs/sandbox_ORB_SIU6.log \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --poll-interval-seconds 60 \
+    --api-timeout-sec 15
+Restart=always
+RestartSec=15
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
