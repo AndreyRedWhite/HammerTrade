@@ -19,6 +19,9 @@ import sqlite3
 from datetime import datetime, timezone
 
 MARKER = "FILL_UNITS_MIGRATED"
+# rows created after this instant were written by the FIXED trader (per-share
+# fills) and must never be divided again
+CUTOFF = "2026-07-02T11:00:00+00:00"
 
 
 def recompute(row: dict) -> dict:
@@ -52,6 +55,11 @@ def migrate(path: str, apply: bool) -> None:
     rows = [dict(r) for r in con.execute("SELECT * FROM pair_trades")]
     if not rows:
         print(f"{path}: no trades")
+    skipped = [r for r in rows if str(r.get("created_at", "")) >= CUTOFF]
+    if skipped:
+        print(f"{path}: {len(skipped)} row(s) created after {CUTOFF} — written by the "
+              f"fixed trader, left untouched")
+    rows = [r for r in rows if str(r.get("created_at", "")) < CUTOFF]
     for r in rows:
         new = recompute(r)
         print(f"{path}: {r['trade_id']} [{r['status']}]"
