@@ -35,6 +35,7 @@ SCRIPT_FAMILY = {
     "run_hammer_maxhold5_sandbox.py": ("sandbox", "sandbox_trades", "net_pnl_rub", "exit_time"),
     "run_pairs_sandbox_trader.py":    ("sandbox", "pair_trades", "net_pnl_rub", "exit_ts"),
     "run_orb_sandbox_trader.py":      ("sandbox", "orb_trades", "net_pnl_rub", "exit_ts"),
+    "run_carry_sandbox_trader.py":    ("sandbox", "carry_trades", "net_pnl_rub", "exit_ts"),
 }
 
 

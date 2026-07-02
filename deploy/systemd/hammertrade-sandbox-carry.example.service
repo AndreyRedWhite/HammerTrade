@@ -1,0 +1,31 @@
+[Unit]
+Description=HammerTrade perp funding-carry SANDBOX — IMOEX+GOLD (T-Bank sandbox contour, virtual money, REAL fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_carry_sandbox_trader.py \
+    --legs IMOEXF:MM,GLDRUBF:GL \
+    --notional 45000 \
+    --funding-ma-days 20 \
+    --entry-carry-bp 1.0 \
+    --exit-carry-bp 0.0 \
+    --roll-dte 7 \
+    --min-front-dte 10 \
+    --max-actions-per-day 4 \
+    --account-id-env SANDBOX_ACCOUNT_ID_CARRY \
+    --trading-enabled-env SANDBOX_CARRY_ENABLED \
+    --state-db data/sandbox/sandbox_carry.sqlite \
+    --status-file runtime/sandbox_status_CARRY.json \
+    --log-file logs/sandbox_CARRY.log \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --poll-interval-seconds 900
+Restart=always
+RestartSec=30
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
