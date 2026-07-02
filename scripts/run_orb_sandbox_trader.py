@@ -137,9 +137,15 @@ def _order(broker, account_id, uid, lots, side, dry_run, logger, tag):
         return None, 0.0
     res = broker.post_order(account_id=account_id, instrument_uid=uid, quantity_lots=lots,
                             direction=side, order_type="MARKET", idempotency_key=str(uuid.uuid4()))
+    filled = res.lots_executed or 0
+    # executed_order_price is the TOTAL executed value in RUB — normalize to
+    # per-contract, which for Si (1 pt = 1 ₽) equals price in points. If this
+    # trader is ever pointed at a future with point_value ≠ 1 (e.g. IMOEXF),
+    # a rub→points conversion must be added here.
+    px = (res.executed_price / filled) if (res.executed_price and filled) else None
     logger.info(f"ORDER {tag} side={side} lots={lots} status={res.status} "
-                f"filled={res.lots_executed} price={res.executed_price} comm={res.commission_rub}")
-    return res.executed_price, (res.commission_rub or 0.0)
+                f"filled={filled} avg_px={px} total={res.executed_price} comm={res.commission_rub}")
+    return px, (res.commission_rub or 0.0)
 
 
 def _reconcile(broker, account_id, uid, expected_short_lots, logger):

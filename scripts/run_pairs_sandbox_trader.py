@@ -206,10 +206,19 @@ def _qty_lots(notional: float, price: float, lot: int) -> int:
     return max(lots, 1)
 
 
-def _place(broker, account_id, uid, lots, side, dry_run, logger, tag,
+def _per_share(total_rub, lots, lot):
+    """API `executed_order_price` is the TOTAL executed value in RUB, not a price.
+    The journal and the PnL math are per-SHARE — normalize here, at the boundary.
+    (Bug history: storing the total inflated pair PnL ~×qty, e.g. RTKM +56k.)"""
+    if total_rub is None or not lots or not lot:
+        return None
+    return total_rub / (lots * lot)
+
+
+def _place(broker, account_id, uid, lots, side, dry_run, logger, tag, lot=1,
            order_type="market", limit_price=None, timeout_sec=20.0, poll_sec=2.0,
            force_fill=False):
-    """Place one order leg. Returns (avg_fill_price, total_commission, executed_lots).
+    """Place one order leg. Returns (avg_fill_price_PER_SHARE, total_commission, executed_lots).
 
     market: single MARKET order (crosses the spread).
     limit:  passive LIMIT @ limit_price; poll up to timeout_sec; cancel remainder.
@@ -225,14 +234,14 @@ def _place(broker, account_id, uid, lots, side, dry_run, logger, tag,
                                 idempotency_key=str(uuid.uuid4()))
         order_id = res.order_id
         filled = res.lots_executed or 0
-        fill_px = res.executed_price
+        total = res.executed_price  # TOTAL RUB of the executed part (cumulative)
         comm = res.commission_rub or 0.0
         deadline = time.time() + timeout_sec
         while filled < lots and time.time() < deadline:
             time.sleep(poll_sec)
             st = broker.get_order_state(account_id, order_id)
             filled = st.lots_executed or filled
-            fill_px = st.executed_price or fill_px
+            total = st.executed_price or total
             comm = st.commission_rub or comm
         if filled < lots:
             try:
@@ -245,11 +254,12 @@ def _place(broker, account_id, uid, lots, side, dry_run, logger, tag,
                                       order_type="MARKET", idempotency_key=str(uuid.uuid4()))
                 mf = m.lots_executed or 0
                 if mf > 0:
-                    mpx = m.executed_price or limit_price
-                    fill_px = ((fill_px or mpx) * filled + mpx * mf) / max(filled + mf, 1)
+                    # separate order → totals add up
+                    total = (total or 0.0) + (m.executed_price or limit_price * mf * lot)
                     comm += m.commission_rub or 0.0
                     filled += mf
-                logger.info(f"LIMIT_TO_MARKET {tag} fallback mkt_filled={mf} px={m.executed_price}")
+                logger.info(f"LIMIT_TO_MARKET {tag} fallback mkt_filled={mf} total={m.executed_price}")
+        fill_px = _per_share(total, filled, lot)
         logger.info(f"ORDER {tag} LIMIT@{limit_price} side={side} lots={lots} filled={filled} "
                     f"avg_px={fill_px} comm={comm}")
         return fill_px, comm, filled
@@ -258,9 +268,10 @@ def _place(broker, account_id, uid, lots, side, dry_run, logger, tag,
                             quantity_lots=lots, direction=side, order_type="MARKET",
                             idempotency_key=str(uuid.uuid4()))
     filled = res.lots_executed or 0
+    fill_px = _per_share(res.executed_price, filled, lot)
     logger.info(f"ORDER {tag} MARKET side={side} lots={lots} status={res.status} "
-                f"filled={filled} price={res.executed_price} comm={res.commission_rub}")
-    return res.executed_price, res.commission_rub, filled
+                f"filled={filled} avg_px={fill_px} total={res.executed_price} comm={res.commission_rub}")
+    return fill_px, res.commission_rub, filled
 
 
 def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, direction,
@@ -275,25 +286,25 @@ def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, dir
     ord_side = "SELL" if direction == "LONG_SPREAD" else "BUY"
 
     pf, pc, pfl = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger,
-                         f"{pair}/ENTRY/pref", order_type=order_type, limit_price=pref_px,
+                         f"{pair}/ENTRY/pref", lot=pref_lot, order_type=order_type, limit_price=pref_px,
                          timeout_sec=limit_timeout, poll_sec=limit_poll)
     if not dry_run and pfl < pref_lots:
         logger.error(f"ENTRY_LEG1_FAIL pair={pair} pref filled={pfl}/{pref_lots}; flattening")
         if pfl > 0:
             _place(broker, account_id, pref_uid, pfl, "SELL" if pref_side == "BUY" else "BUY",
-                   dry_run, logger, f"{pair}/UNWIND/pref")
+                   dry_run, logger, f"{pair}/UNWIND/pref", lot=pref_lot)
         db.event(pair, "ENTRY_ABORT", f"leg1 partial {pfl}/{pref_lots}")
         return None
     of, oc, ofl = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger,
-                         f"{pair}/ENTRY/ord", order_type=order_type, limit_price=ord_px,
+                         f"{pair}/ENTRY/ord", lot=ord_lot, order_type=order_type, limit_price=ord_px,
                          timeout_sec=limit_timeout, poll_sec=limit_poll)
     if not dry_run and ofl < ord_lots:
         logger.error(f"ENTRY_LEG2_FAIL pair={pair} ord filled={ofl}/{ord_lots}; flattening BOTH")
         _place(broker, account_id, pref_uid, pref_lots, "SELL" if pref_side == "BUY" else "BUY",
-               dry_run, logger, f"{pair}/UNWIND/pref")
+               dry_run, logger, f"{pair}/UNWIND/pref", lot=pref_lot)
         if ofl > 0:
             _place(broker, account_id, ord_uid, ofl, "SELL" if ord_side == "BUY" else "BUY",
-                   dry_run, logger, f"{pair}/UNWIND/ord")
+                   dry_run, logger, f"{pair}/UNWIND/ord", lot=ord_lot)
         db.event(pair, "ENTRY_ABORT", f"leg2 partial {ofl}/{ord_lots}")
         return None
 
@@ -326,10 +337,10 @@ def _close_pair(broker, account_id, db, logger, dry_run, *, t, pref_uid, ord_uid
     ord_side = "BUY" if direction == "LONG_SPREAD" else "SELL"
     # exits MUST close → force_fill (limit then market-fallback)
     pf, pc, _ = _place(broker, account_id, pref_uid, pref_lots, pref_side, dry_run, logger,
-                       f"{t['pair']}/EXIT/pref", order_type=order_type, limit_price=pref_px,
+                       f"{t['pair']}/EXIT/pref", lot=pref_lot, order_type=order_type, limit_price=pref_px,
                        timeout_sec=limit_timeout, poll_sec=limit_poll, force_fill=True)
     of, oc, _ = _place(broker, account_id, ord_uid, ord_lots, ord_side, dry_run, logger,
-                       f"{t['pair']}/EXIT/ord", order_type=order_type, limit_price=ord_px,
+                       f"{t['pair']}/EXIT/ord", lot=ord_lot, order_type=order_type, limit_price=ord_px,
                        timeout_sec=limit_timeout, poll_sec=limit_poll, force_fill=True)
     pref_exit = pf if pf is not None else pref_px
     ord_exit = of if of is not None else ord_px
