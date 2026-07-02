@@ -1,0 +1,21 @@
+# Fleet health check with Telegram alerting. Read-only: reads status JSONs +
+# systemctl, sends a Telegram message on problems (dedup-gated, recovery ping).
+# Needs TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in /opt/hammertrade/.env.
+#
+# Install (with the .timer):
+#   sudo cp deploy/systemd/hammertrade-fleet-alert.example.service /etc/systemd/system/hammertrade-fleet-alert.service
+#   sudo cp deploy/systemd/hammertrade-fleet-alert.example.timer /etc/systemd/system/hammertrade-fleet-alert.timer
+#   sudo systemctl daemon-reload && sudo systemctl enable --now hammertrade-fleet-alert.timer
+
+[Unit]
+Description=HammerTrade fleet health check + Telegram alert
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/check_all_paper_status.py --telegram
+# the check itself exits 1 on problems — that's the alert's job, not a unit failure
+SuccessExitStatus=0 1
+User=vorontsov

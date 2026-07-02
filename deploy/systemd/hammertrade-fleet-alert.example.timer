@@ -1,0 +1,11 @@
+# Fires the fleet health check every 10 minutes. Alert spam is prevented in
+# the script itself (unchanged problem set re-alerts only after --realert-hours).
+[Unit]
+Description=HammerTrade fleet alert timer
+
+[Timer]
+OnCalendar=*:00/10
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -34,6 +34,13 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--leftover-threshold-sec", type=int, default=21600)  # 6h
     p.add_argument("--no-systemd", action="store_true",
                    help="Skip the systemd unit section (e.g. when run off-server)")
+    p.add_argument("--telegram", action="store_true",
+                   help="Send a Telegram alert on problems (TELEGRAM_BOT_TOKEN + "
+                        "TELEGRAM_CHAT_ID env); dedup-gated via --alert-state")
+    p.add_argument("--alert-state", default="runtime/fleet_alert_state.json",
+                   help="State file for alert dedup / recovery detection")
+    p.add_argument("--realert-hours", type=float, default=4.0,
+                   help="Re-send an unchanged problem set after this many hours")
     return p.parse_args()
 
 
@@ -175,6 +182,7 @@ def main() -> int:
     args = _parse_args()
     now = datetime.now(tz=timezone.utc)
     exit_code = 0
+    problems: list[str] = []  # human-readable, feeds the --telegram alert
 
     print(f"\nFleet status: {now.strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
@@ -194,6 +202,7 @@ def main() -> int:
                 flag = "" if active == "active" else "  <-- NOT ACTIVE"
                 if active != "active":
                     exit_code = 1
+                    problems.append(f"unit {unit}: {active}")
                 short = unit.replace("hammertrade-", "").replace(".service", "")
                 print(f"  {short:46s} {active:10s} restarts={restarts}{flag}")
             for unit, active, restarts, stype, result in oneshots:
@@ -202,6 +211,7 @@ def main() -> int:
                 flag = "" if result in ("success", "") else f"  <-- last run {result}"
                 if result not in ("success", ""):
                     exit_code = 1
+                    problems.append(f"oneshot {unit}: last run {result}")
                 short = unit.replace("hammertrade-", "").replace(".service", "")
                 print(f"  {short:46s} oneshot    last={result or 'n/a'}{flag}")
 
@@ -217,6 +227,7 @@ def main() -> int:
         if status is None:
             rows.append((name, None))
             exit_code = 1
+            problems.append(f"status {name}: unreadable JSON")
             continue
         s = _summarize(status, now, args.stale_threshold_sec)
         if s["age_sec"] is not None and s["age_sec"] > args.leftover_threshold_sec:
@@ -241,6 +252,7 @@ def main() -> int:
             reason = s.get("pause_reason")
             label = s["health"] + (f" ({reason})" if reason and s["health"] == "PAUSED" else "")
             degraded.append((name, label))
+            problems.append(f"service {name}: {label}")
         pnl_str = f"{s['pnl']:.0f}" if isinstance(s["pnl"], (int, float)) else str(s["pnl"])
         mkt = "" if s["market_open"] else " (mkt closed)"
         print(f"{name:<30}{s['label']:<20}{s['strat']:<11}{s['dir']:<6}"
@@ -259,6 +271,14 @@ def main() -> int:
         print(f"\nStale leftovers (>{args.leftover_threshold_sec//3600}h old, "
               f"no live service — e.g. rolled-over): "
               + ", ".join(n for n, _ in leftovers))
+
+    if args.telegram:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from src.reporting.telegram_alert import alert_on_problems
+        action = alert_on_problems(problems, Path(args.alert_state),
+                                   resend_after_sec=args.realert_hours * 3600)
+        print(f"[telegram] {action}"
+              + (f" ({len(problems)} problem(s))" if problems else ""))
 
     print()
     return exit_code
