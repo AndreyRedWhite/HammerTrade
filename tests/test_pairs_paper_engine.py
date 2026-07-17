@@ -87,6 +87,53 @@ def test_exit_on_time():
     assert trade2.exit_reason == PairExitReason.TIME
 
 
+def test_no_stop_loss_by_default():
+    # Same drift as test_stop_loss_fires_when_z_stop_cannot, but stop_loss_bps unset.
+    trade, _ = process_pair_bar(_bar("2026-06-01T10:00", 3.12, 37.165, 37.165, 15.49, 15.49),
+                                None, **COMMON)
+    trade2, _ = process_pair_bar(_bar("2026-06-01T11:00", 1.70, 37.165, 36.015, 15.49, 13.65),
+                                 trade, **COMMON)
+    assert trade2.status == PairTradeStatus.OPEN  # bleeds on, exactly as SNGS did
+
+
+def test_stop_loss_fires_when_z_stop_cannot():
+    """Reproduces the SNGS trade of 2026-07-17 that lost ~9k of a 100k leg.
+
+    SHORT_SPREAD at z=3.12; the spread then WIDENED (log 0.875 -> 0.970) but the rolling
+    mean chased it, so z fell to 1.70 — below stop_z=4.0 and above exit_z=0.5, meaning no
+    z-based exit could ever fire. Only a PnL-space stop catches this.
+    """
+    common = dict(COMMON, stop_loss_bps=300.0)  # 3% of 100k = 3000 RUB
+    trade, _ = process_pair_bar(_bar("2026-06-01T10:00", 3.12, 37.165, 37.165, 15.49, 15.49),
+                                None, **common)
+    assert trade.direction == "SHORT_SPREAD"
+    trade2, logs = process_pair_bar(_bar("2026-06-01T11:00", 1.70, 37.165, 36.015, 15.49, 13.65),
+                                    trade, **common)
+    assert trade2.status == PairTradeStatus.CLOSED
+    assert trade2.exit_reason == PairExitReason.STOP_LOSS
+    assert trade2.pnl_rub_market < -3000  # the bar gapped straight through the stop
+
+
+def test_stop_loss_does_not_fire_on_small_loss():
+    common = dict(COMMON, stop_loss_bps=300.0)
+    trade, _ = process_pair_bar(_bar("2026-06-01T10:00", 2.5, 300, 300, 300, 300),
+                                None, **common)
+    # ~0.3% adverse move on one leg → well inside the 3% stop
+    trade2, _ = process_pair_bar(_bar("2026-06-01T11:00", 2.4, 300, 301, 300, 300),
+                                 trade, **common)
+    assert trade2.status == PairTradeStatus.OPEN
+
+
+def test_stop_loss_takes_priority_over_mean_exit_label():
+    # z reverts AND the position is past the stop → labelled STOP_LOSS, not EXIT_MEAN.
+    common = dict(COMMON, stop_loss_bps=300.0)
+    trade, _ = process_pair_bar(_bar("2026-06-01T10:00", 3.12, 37.165, 37.165, 15.49, 15.49),
+                                None, **common)
+    trade2, _ = process_pair_bar(_bar("2026-06-01T11:00", 0.3, 37.165, 36.015, 15.49, 13.65),
+                                 trade, **common)
+    assert trade2.exit_reason == PairExitReason.STOP_LOSS
+
+
 def test_short_spread_profits_when_spread_narrows():
     # SHORT_SPREAD = short pref, long ord. Profit if pref falls and/or ord rises.
     pnl = _bar_pnl("SHORT_SPREAD", pref_entry=310, ord_entry=300,

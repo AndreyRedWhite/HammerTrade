@@ -53,10 +53,18 @@ def process_pair_bar(
     notional_per_leg: float,
     cost_bps_per_leg_side: float,
     experiment_name: str,
+    stop_loss_bps: Optional[float] = None,
 ) -> tuple[Optional[PairPaperTrade], list[str]]:
     """Process one closed aligned bar. Returns (trade_to_upsert | None, logs).
 
     `bar` must carry: timestamp, z, pref_open, pref_close, ord_open, ord_close.
+
+    `stop_z` alone cannot bound the loss: z is measured against a ROLLING mean, so a
+    spread that trends away drags the mean after it and z decays back toward 0 while
+    the position bleeds. (Observed 2026-07-17 on SNGS: spread widened 0.875 -> 0.970
+    while z fell 3.12 -> 1.70, so |z| >= stop_z never fired and the trade lost ~9k of
+    a 100k leg before max_hold_bars timed it out.) `stop_loss_bps` bounds the loss in
+    the space it actually lives in — PnL — and is the only exit that does.
     """
     logs: list[str] = []
 
@@ -117,8 +125,24 @@ def process_pair_bar(
 
     held = open_trade.bars_held
     abs_z = abs(z)
+
+    # Mark the real position (market fill once known), not the theoretical entry.
+    unrealized = _bar_pnl(
+        open_trade.direction,
+        open_trade.pref_market_fill or open_trade.pref_entry_price,
+        open_trade.ord_market_fill or open_trade.ord_entry_price,
+        pref_close, ord_close, notional_per_leg, cost_bps_per_leg_side,
+    )
+    stop_loss_rub = (
+        abs(stop_loss_bps) / 1e4 * notional_per_leg if stop_loss_bps is not None else None
+    )
+
     exit_reason = None
-    if abs_z <= exit_z:
+    # Checked before EXIT_MEAN so a trade that bled past the stop is labelled honestly
+    # even if z happens to revert on the same bar.
+    if stop_loss_rub is not None and unrealized <= -stop_loss_rub:
+        exit_reason = PairExitReason.STOP_LOSS
+    elif abs_z <= exit_z:
         exit_reason = PairExitReason.EXIT_MEAN
     elif abs_z >= stop_z:
         exit_reason = PairExitReason.STOP_DIVERGE

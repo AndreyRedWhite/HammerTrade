@@ -53,6 +53,11 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--entry-z", type=float, default=2.0)
     p.add_argument("--exit-z", type=float, default=0.5)
     p.add_argument("--stop-z", type=float, default=4.0)
+    p.add_argument("--stop-loss-bps", type=float, default=None,
+                   help="Hard stop on unrealized loss, in bps of ONE leg's notional "
+                        "(300 = 3%% = 600 RUB at 20k/leg). --stop-z cannot bound the loss "
+                        "on a trending spread: the rolling mean chases the drift, so z "
+                        "decays while the position bleeds. Off by default.")
     p.add_argument("--max-hold-bars", type=int, default=60)
     p.add_argument("--notional-per-leg", type=float, default=20000.0)
     p.add_argument("--lookback-minutes", type=int, default=43200, help="History per leg (~30d)")
@@ -326,6 +331,20 @@ def _open_pair(broker, account_id, db, logger, dry_run, *, pair, pref, ordn, dir
     return trade
 
 
+def _unrealized_net(t, pref_px, ord_px) -> float:
+    """Mark an open pair to `pref_px`/`ord_px`, net of the entry commission already paid.
+
+    Mirrors the realized math in _close_pair; the exit commission is not yet known, so
+    this reads slightly better than the eventual realized PnL.
+    """
+    pref_sh, ord_sh = t["pref_qty"], t["ord_qty"]
+    if t["direction"] == "LONG_SPREAD":
+        gross = (pref_px - t["pref_entry_fill"]) * pref_sh + (t["ord_entry_fill"] - ord_px) * ord_sh
+    else:
+        gross = (t["pref_entry_fill"] - pref_px) * pref_sh + (ord_px - t["ord_entry_fill"]) * ord_sh
+    return gross - (t["commission_rub"] or 0)
+
+
 def _close_pair(broker, account_id, db, logger, dry_run, *, t, pref_uid, ord_uid,
                 pref_lot, ord_lot, pref_px, ord_px, z, ts, reason,
                 order_type="market", limit_timeout=20.0, limit_poll=2.0):
@@ -457,7 +476,12 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
             open_t["bars_held"] = (open_t["bars_held"] or 0) + 1
             db.upsert_trade(open_t)
             reason = None
-            if abs(z) <= args.exit_z:
+            unrealized = _unrealized_net(open_t, pref_px, ord_px)
+            stop_rub = (abs(args.stop_loss_bps) / 1e4 * args.notional_per_leg
+                        if args.stop_loss_bps is not None else None)
+            if stop_rub is not None and unrealized <= -stop_rub:
+                reason = "STOP_LOSS"
+            elif abs(z) <= args.exit_z:
                 reason = "EXIT_MEAN"
             elif abs(z) >= args.stop_z:
                 reason = "STOP_DIVERGE"
@@ -544,7 +568,8 @@ def main():
     logger.info("Pairs Stat-Arb SANDBOX Trader — SANDBOX contour (virtual money)")
     logger.info(f"  pairs={args.pairs} dry_run={dry_run}")
     logger.info(f"  z_window={args.z_window} entry_z={args.entry_z} exit_z={args.exit_z} "
-                f"stop_z={args.stop_z} max_hold={args.max_hold_bars} notional/leg={args.notional_per_leg}")
+                f"stop_z={args.stop_z} stop_loss_bps={args.stop_loss_bps} "
+                f"max_hold={args.max_hold_bars} notional/leg={args.notional_per_leg}")
     logger.info("=" * 60)
 
     if not dry_run:

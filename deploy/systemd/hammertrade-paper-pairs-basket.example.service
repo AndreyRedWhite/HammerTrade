@@ -1,6 +1,9 @@
 # HammerTrade Paper Trader — pref/ordinary stat-arb BASKET (no real orders).
-# Market-neutral mean-reversion of log(pref)-log(ord) spread on 4 pairs:
-#   SBERP/SBER, TATNP/TATN, SNGSP/SNGS, RTKMP/RTKM
+# Market-neutral mean-reversion of log(pref)-log(ord) spread.
+#   SBERP/SBER, TATNP/TATN, RTKMP/RTKM
+# SNGSP/SNGS dropped 2026-07-17: -4746 RUB / PF 0.73 / -29.7 bps per trade on real
+# costs — its spread trends, so it never cleared the 20bps round-trip hurdle.
+# SBERP/SBER is next to go (-2347 / PF 0.18); kept only until its open position closes.
 # Backtest (60m, zw50, entry2.0, exit0.5): train 199tr WR64 PF1.34,
 # OOS May 60tr WR63 PF1.50. THIN cost margin (breakeven ~5bps/leg) → paper
 # validation tracks theoretical (signal close) vs market (next-bar open) fill.
@@ -21,13 +24,14 @@ Type=simple
 WorkingDirectory=/opt/hammertrade
 EnvironmentFile=/opt/hammertrade/.env
 ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_paper_trader.py \
-    --pairs SBERP:SBER,TATNP:TATN,SNGSP:SNGS,RTKMP:RTKM \
+    --pairs SBERP:SBER,TATNP:TATN,RTKMP:RTKM \
     --class-code TQBR \
     --bar-timeframe 1h \
     --z-window 50 \
     --entry-z 2.0 \
     --exit-z 0.5 \
     --stop-z 4.0 \
+    --stop-loss-bps 300 \
     --max-hold-bars 45 \
     --notional-per-leg 100000 \
     --cost-bps-per-leg-side 5.0 \

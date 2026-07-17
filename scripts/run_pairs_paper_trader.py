@@ -42,6 +42,11 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--entry-z", type=float, default=2.0)
     p.add_argument("--exit-z", type=float, default=0.5)
     p.add_argument("--stop-z", type=float, default=4.0)
+    p.add_argument("--stop-loss-bps", type=float, default=None,
+                   help="Hard stop on unrealized loss, in bps of ONE leg's notional "
+                        "(300 = 3%% = 3000 RUB at 100k/leg). --stop-z cannot bound the "
+                        "loss on a trending spread: the rolling mean chases the drift, "
+                        "so z decays while the position bleeds. Off by default.")
     p.add_argument("--max-hold-bars", type=int, default=45,
                    help="~5 trading days at 60m (9 bars/day)")
     p.add_argument("--notional-per-leg", type=float, default=100_000.0)
@@ -140,6 +145,7 @@ def _process_pair(args, repo, logger, pref, ordn, now_utc) -> dict:
             notional_per_leg=args.notional_per_leg,
             cost_bps_per_leg_side=args.cost_bps_per_leg_side,
             experiment_name=args.experiment_name,
+            stop_loss_bps=args.stop_loss_bps,
         )
         for m in logs:
             logger.info(m)
@@ -228,7 +234,7 @@ def main():
     logger.info(f"  pairs={pairs}")
     logger.info(f"  bar_tf={args.bar_timeframe} z_window={args.z_window} "
                 f"entry_z={args.entry_z} exit_z={args.exit_z} stop_z={args.stop_z} "
-                f"max_hold={args.max_hold_bars}")
+                f"max_hold={args.max_hold_bars} stop_loss_bps={args.stop_loss_bps}")
     logger.info(f"  notional/leg={args.notional_per_leg} cost_bps={args.cost_bps_per_leg_side}")
     logger.info(f"  experiment={args.experiment_name}")
     logger.info("=" * 60)

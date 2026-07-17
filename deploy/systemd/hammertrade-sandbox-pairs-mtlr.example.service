@@ -14,6 +14,7 @@ ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_sandbox_trader.py 
     --entry-z 2.0 \
     --exit-z 0.5 \
     --stop-z 4.0 \
+    --stop-loss-bps 300 \
     --max-hold-bars 45 \
     --notional-per-leg 20000 \
     --account-id-env SANDBOX_ACCOUNT_ID_PAIRS \

@@ -20,6 +20,7 @@ class PairTradeStatus(str, Enum):
 class PairExitReason(str, Enum):
     EXIT_MEAN = "EXIT_MEAN"          # |z| reverted to <= exit_z
     STOP_DIVERGE = "STOP_DIVERGE"    # |z| diverged to >= stop_z
+    STOP_LOSS = "STOP_LOSS"          # unrealized loss >= stop_loss_bps of leg notional
     TIME = "TIME"                    # held >= max_hold_bars
 
 
