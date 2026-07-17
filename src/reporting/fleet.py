@@ -31,7 +31,10 @@ SCRIPT_FAMILY = {
     "run_orb_paper_trader.py":        ("orb", "orb_paper_trades", "pnl_rub", "exit_timestamp"),
     "run_orf_paper_trader.py":        ("orf", "orf_paper_trades", "pnl_rub", "exit_timestamp"),
     "run_vwap_reversion_paper_trader.py": ("vwap", "vwap_paper_trades", "pnl_rub", "exit_timestamp"),
-    "run_pairs_paper_trader.py":      ("pairs", "pairs_trades", "pnl_rub", "exit_timestamp"),
+    # pnl_rub prices the entry at the signal bar close, which the fills never achieve;
+    # pnl_rub_market is the real entry fill and is NULL only when none was captured.
+    "run_pairs_paper_trader.py":      ("pairs", "pairs_trades",
+                                       "COALESCE(pnl_rub_market, pnl_rub)", "exit_timestamp"),
     "run_hammer_maxhold5_sandbox.py": ("sandbox", "sandbox_trades", "net_pnl_rub", "exit_time"),
     "run_pairs_sandbox_trader.py":    ("sandbox", "pair_trades", "net_pnl_rub", "exit_ts"),
     "run_orb_sandbox_trader.py":      ("sandbox", "orb_trades", "net_pnl_rub", "exit_ts"),

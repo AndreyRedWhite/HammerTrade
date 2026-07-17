@@ -30,7 +30,7 @@ ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_paper_trader.py \
     --stop-z 4.0 \
     --max-hold-bars 45 \
     --notional-per-leg 100000 \
-    --cost-bps-per-leg-side 3.5 \
+    --cost-bps-per-leg-side 5.0 \
     --lookback-minutes 20160 \
     --state-db data/paper/paper_state_pairs_basket.sqlite \
     --status-file runtime/paper_status_PAIRS_BASKET.json \

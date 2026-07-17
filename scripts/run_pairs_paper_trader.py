@@ -45,7 +45,9 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--max-hold-bars", type=int, default=45,
                    help="~5 trading days at 60m (9 bars/day)")
     p.add_argument("--notional-per-leg", type=float, default=100_000.0)
-    p.add_argument("--cost-bps-per-leg-side", type=float, default=3.5)
+    # 5.0 = measured from sandbox fills (commission is exactly proportional to notional,
+    # so a round-trip costs 4 x 5.0 = 20bps of one leg's notional regardless of size).
+    p.add_argument("--cost-bps-per-leg-side", type=float, default=5.0)
     p.add_argument("--lookback-minutes", type=int, default=20160,
                    help="History to fetch per leg (default 14 days → ~70+ hourly bars)")
     p.add_argument("--state-db", default="data/paper/paper_state_pairs_basket.sqlite")
