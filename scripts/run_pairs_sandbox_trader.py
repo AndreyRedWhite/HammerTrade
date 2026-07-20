@@ -66,6 +66,12 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--trading-enabled-env", default="SANDBOX_TRADING_ENABLED",
                    help="Env var that must be 'true' to place orders (isolate from other sandbox services)")
     p.add_argument("--max-trades-per-day", type=int, default=20)
+    p.add_argument("--max-backfill-bars", type=int, default=5,
+                   help="On resume after a gap (downtime / a just-cleared reconcile HALT), "
+                        "process at most this many missed bars. A larger gap is NOT replayed "
+                        "as fresh orders — we jump to the latest bar and resume live. "
+                        "(2026-07-20: unfreezing TATN after a week replayed ~70 stale hourly "
+                        "signals as live market orders before this guard existed.)")
     p.add_argument("--order-type", choices=["market", "limit"], default="market",
                    help="market = cross the spread (baseline); limit = passive @ bar-close, "
                         "poll+cancel, exits fall back to market. v1: validate vs market at open.")
@@ -125,6 +131,23 @@ def _bar_minutes(tf: str) -> int:
 def _today_msk(now_utc: Optional[datetime] = None) -> str:
     now_utc = now_utc or datetime.now(tz=timezone.utc)
     return (now_utc + timedelta(hours=3)).strftime("%Y-%m-%d")
+
+
+def _resume_live_bars(new_bars, max_backfill: int):
+    """Guard against replaying a backlog as fresh orders.
+
+    Each cycle the trader trades every bar newer than `last_bar`. In steady state that is
+    one bar. But after downtime — or a just-cleared reconcile HALT — `last_bar` can be days
+    stale, so `new_bars` becomes a long history that the trade loop would execute as LIVE
+    market orders at today's prices (2026-07-20: TATN replayed a week of hourly signals).
+
+    On a gap wider than `max_backfill`, keep only the most recent closed bar so we resume
+    live on the current signal, not stale ones. Returns (bars_to_process, skipped_count).
+    """
+    n = len(new_bars)
+    if n > max_backfill:
+        return new_bars.tail(1), n - 1
+    return new_bars, 0
 
 
 # ───────────────────────── persistence ─────────────────────────
@@ -390,7 +413,8 @@ def _close_pair(broker, account_id, db, logger, dry_run, *, t, pref_uid, ord_uid
 def _reconcile(broker, account_id, open_t, pref_i, ord_i, pref_lot, ord_lot):
     """Compare expected positions (from the journal) vs actual (sandbox account) for
     THIS pair's two legs only. Disjoint instruments → safe on a shared account.
-    Returns (ok: bool, detail: str). Positions are signed lot balances."""
+    Returns (ok: bool, detail: str, mism: list[(uid, lot, exp, act)]). Positions are
+    signed UNIT (share) balances."""
     exp = {pref_i["uid"]: 0, ord_i["uid"]: 0}
     if open_t is not None and str(open_t.get("status")) == "OPEN":
         d = open_t["direction"]
@@ -406,10 +430,45 @@ def _reconcile(broker, account_id, open_t, pref_i, ord_i, pref_lot, ord_lot):
         uid = p.instrument_uid or figi_to_uid.get(p.figi)
         if uid in actual:
             actual[uid] = int(p.balance)
-    mism = [(u, exp[u], actual[u]) for u in exp if exp[u] != actual[u]]
-    if mism:
-        return False, "; ".join(f"uid={u[:8]} exp_lots={e} act_lots={a}" for u, e, a in mism)
-    return True, "OK"
+    lot_of = {pref_i["uid"]: pref_lot, ord_i["uid"]: ord_lot}
+    mism = [(u, lot_of[u], exp[u], actual[u]) for u in exp if exp[u] != actual[u]]
+    detail = "; ".join(f"uid={u[:8]} exp_lots={e} act_lots={a}" for u, _, e, a in mism)
+    return (not mism), detail, mism
+
+
+def _reconcile_or_heal(broker, account_id, open_t, pref_i, ord_i, dry_run, logger, db, pair):
+    """Reconcile journal vs account, and self-heal the safe case instead of HALTing forever.
+
+    On a mismatch:
+      * journal FLAT (no OPEN trade) and every stray leg is cleanly lot-divisible →
+        SELF-HEAL: market-flatten each stray to zero and skip trading this cycle (the next
+        cycle re-verifies flat and resumes). This is the automated version of the manual
+        2026-07-20 flatten — a stray with no journal position bleeds naked otherwise.
+      * an OPEN position is desynced, or a stray is not lot-divisible → HALT (return
+        RECONCILE_FAILED): trading around a live position, or a fractional flatten, is
+        unsafe to automate.
+
+    Returns (status, detail) with status in {"OK", "SELF_HEALED", "RECONCILE_FAILED"}.
+    """
+    ok, detail, mism = _reconcile(broker, account_id, open_t, pref_i, ord_i,
+                                  pref_i["lot"], ord_i["lot"])
+    if ok:
+        return "OK", "OK"
+    journal_flat = open_t is None or str(open_t.get("status")) != "OPEN"
+    divisible = all(a % lot == 0 for (_, lot, _e, a) in mism)
+    if journal_flat and divisible:
+        for uid, lot, _e, a in mism:
+            if a == 0:
+                continue
+            side = "SELL" if a > 0 else "BUY"
+            _place(broker, account_id, uid, abs(a) // lot, side, dry_run, logger,
+                   f"{pair}/RECONCILE_FLATTEN", lot=lot)
+        logger.warning(f"RECONCILE_SELFHEAL pair={pair} flattened strays [{detail}]")
+        db.event(pair, "RECONCILE_SELFHEAL", detail)
+        return "SELF_HEALED", detail
+    logger.error(f"RECONCILE_FAIL pair={pair} {detail}")
+    db.event(pair, "RECONCILE_FAIL", detail)
+    return "RECONCILE_FAILED", detail
 
 
 # ───────────────────────── per-pair cycle ─────────────────────────
@@ -432,19 +491,26 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
     last_ts = pd.Timestamp(last).tz_convert("UTC") if last else None
     new_bars = pdf[pdf["timestamp"] > last_ts] if last_ts is not None else pdf.tail(1)
 
+    # Guard: on a large gap (downtime / a just-cleared HALT) don't replay the backlog as
+    # fresh orders — jump to the latest bar and resume live. set_last_bar (in the loop)
+    # then advances last_bar past the skipped bars.
+    new_bars, skipped = _resume_live_bars(new_bars, args.max_backfill_bars)
+    if skipped:
+        logger.warning(f"GAP_SKIP pair={pair} skipped {skipped} stale bars "
+                       f"(> max_backfill={args.max_backfill_bars}); resuming live on latest")
+        db.event(pair, "GAP_SKIP", f"skipped {skipped} bars, resume live")
+
     open_t = db.open_trade(pair)
     open_t = dict(open_t) if open_t is not None else None
     latest_z = float(pdf["z"].iloc[-1])
 
-    # Position reconciliation: journal vs real account (skip in dry-run). On any
-    # mismatch, HALT this pair (no new entries/exits) and alert — manual fix needed.
+    # Position reconciliation: journal vs real account (skip in dry-run). Self-heals a
+    # journal-flat stray (auto-flatten); HALTs only when an OPEN position is desynced.
     if not dry_run:
-        ok, detail = _reconcile(broker, account_id, open_t, pref_i, ord_i,
-                                pref_i["lot"], ord_i["lot"])
-        if not ok:
-            logger.error(f"RECONCILE_FAIL pair={pair} {detail}")
-            db.event(pair, "RECONCILE_FAIL", detail)
-            return {"pair": pair, "status": "RECONCILE_FAILED", "detail": detail,
+        status, detail = _reconcile_or_heal(broker, account_id, open_t, pref_i, ord_i,
+                                            dry_run, logger, db, pair)
+        if status != "OK":
+            return {"pair": pair, "status": status, "detail": detail,
                     "latest_z": round(latest_z, 3), "has_open": open_t is not None}
 
     date_msk = _today_msk(now_utc)

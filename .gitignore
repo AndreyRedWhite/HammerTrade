@@ -40,6 +40,7 @@ out/
 reports/
 archives/
 logs/
+runtime/
 
 # ─── Instruments cache (re-fetchable from T-Bank) ────────────────────────────
 data/instruments/*.csv
