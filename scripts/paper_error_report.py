@@ -11,8 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 _DEFAULT_STATUS_FILES = [
-    "runtime/paper_status_SiM6_SELL.json",
-    "runtime/paper_status_SiM6_SELL_maxhold5.json",
+    "runtime/paper_status_SiU6_SELL.json",
+    "runtime/paper_status_SiU6_SELL_maxhold5.json",
 ]
 
 
