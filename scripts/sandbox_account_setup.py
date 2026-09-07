@@ -31,6 +31,10 @@ def _parse_args():
         help="Name for a newly created sandbox account",
     )
     p.add_argument(
+        "--dedicated", action="store_true",
+        help="Select an account with --account-name or create it even when other accounts exist",
+    )
+    p.add_argument(
         "--top-up-rub", type=float, default=None,
         help="Top up the (existing or newly created) account with this RUB amount",
     )
@@ -50,7 +54,14 @@ def main():
     with get_sandbox_broker() as broker:
         accounts = broker.get_accounts()
 
-        if accounts:
+        named = next((a for a in accounts if a.get("name") == args.account_name), None)
+        if args.dedicated and named:
+            account_id = named["id"]
+            print(f"Using dedicated sandbox account '{args.account_name}': {account_id}")
+        elif args.dedicated:
+            account_id = broker.open_account(name=args.account_name)
+            print(f"Created dedicated sandbox account '{args.account_name}': {account_id}")
+        elif accounts:
             account_id = accounts[0]["id"]
             print(f"Using existing sandbox account: {account_id}")
             if len(accounts) > 1:

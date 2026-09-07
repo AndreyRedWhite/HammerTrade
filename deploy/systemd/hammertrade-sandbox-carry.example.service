@@ -9,18 +9,21 @@ WorkingDirectory=/opt/hammertrade
 EnvironmentFile=/opt/hammertrade/.env
 ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_carry_sandbox_trader.py \
     --legs IMOEXF:MM,GLDRUBF:GL \
-    --notional 45000 \
+    --notional 1000000 \
     --funding-ma-days 20 \
     --entry-carry-bp 1.0 \
     --exit-carry-bp 0.0 \
+    --roundtrip-cost-bps 10 \
+    --expected-hold-days 10 \
+    --min-cost-cover-multiple 2 \
     --roll-dte 7 \
     --min-front-dte 10 \
     --max-actions-per-day 4 \
     --account-id-env SANDBOX_ACCOUNT_ID_CARRY \
     --trading-enabled-env SANDBOX_CARRY_ENABLED \
-    --state-db data/sandbox/sandbox_carry.sqlite \
-    --status-file runtime/sandbox_status_CARRY.json \
-    --log-file logs/sandbox_CARRY.log \
+    --state-db data/sandbox/sandbox_carry_v2.sqlite \
+    --status-file runtime/sandbox_status_CARRY_V2.json \
+    --log-file logs/sandbox_CARRY_V2.log \
     --market-hours-config configs/market_hours/moex_futures.yaml \
     --poll-interval-seconds 900
 Restart=always

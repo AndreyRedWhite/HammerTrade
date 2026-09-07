@@ -1,5 +1,4 @@
-"""ORB SHORT SANDBOX trading daemon — REAL fills on the T-Bank SANDBOX contour
-(virtual money). Single-leg Opening Range Breakout SHORT on a futures instrument.
+"""Two-sided ORB SANDBOX trading daemon — real fills, virtual money.
 
 Validated edge (from-scratch, real costs, 2026-06-30): ORB SHORT filtered
 (cap500 + vol2x) survives — slippage-robust (big trades), TEST pf ~1.5.
@@ -38,15 +37,19 @@ from src.sandbox.broker import get_sandbox_broker
 
 
 def _parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="ORB SHORT SANDBOX daemon (real sandbox fills).")
+    p = argparse.ArgumentParser(description="Two-sided ORB SANDBOX daemon (real sandbox fills).")
     p.add_argument("--ticker", default="SiU6")
     p.add_argument("--class-code", default="SPBFUT")
     p.add_argument("--or-start", default="10:00")
     p.add_argument("--or-end", default="11:00")
     p.add_argument("--time-exit", default="18:40")
+    p.add_argument("--direction", choices=["SHORT", "LONG", "BOTH"], default="SHORT")
     p.add_argument("--take-r", type=float, default=3.0)
+    p.add_argument("--min-or-range", type=float, default=10.0)
     p.add_argument("--max-or-range", type=float, default=500.0)
     p.add_argument("--breakout-vol-mult", type=float, default=2.0)
+    p.add_argument("--breakout-confirmation", choices=["touch", "close"], default="close",
+                   help="close avoids acting on intrabar false breakouts")
     p.add_argument("--contracts", type=int, default=1)
     p.add_argument("--lookback-minutes", type=int, default=1440)
     p.add_argument("--account-id-env", default="SANDBOX_ACCOUNT_ID_ORB")
@@ -131,31 +134,34 @@ class OrbDB:
     def all_open(self): return self.con.execute("SELECT * FROM orb_trades WHERE status='OPEN'").fetchall()
 
 
-def _order(broker, account_id, uid, lots, side, dry_run, logger, tag):
+def fill_points(total_rub, lots, point_value_rub):
+    if total_rub is None or not lots or not point_value_rub:
+        return None
+    return total_rub / (lots * point_value_rub)
+
+
+def _order(broker, account_id, uid, lots, side, dry_run, logger, tag,
+           point_value_rub=1.0, expected_price=None):
     if dry_run:
         logger.info(f"DRY_ORDER {tag} side={side} lots={lots}")
-        return None, 0.0
+        return expected_price, 0.0
     res = broker.post_order(account_id=account_id, instrument_uid=uid, quantity_lots=lots,
                             direction=side, order_type="MARKET", idempotency_key=str(uuid.uuid4()))
     filled = res.lots_executed or 0
-    # executed_order_price is the TOTAL executed value in RUB — normalize to
-    # per-contract, which for Si (1 pt = 1 ₽) equals price in points. If this
-    # trader is ever pointed at a future with point_value ≠ 1 (e.g. IMOEXF),
-    # a rub→points conversion must be added here.
-    px = (res.executed_price / filled) if (res.executed_price and filled) else None
+    # executed_order_price is TOTAL RUB, not a quoted futures price.
+    px = fill_points(res.executed_price, filled, point_value_rub)
     logger.info(f"ORDER {tag} side={side} lots={lots} status={res.status} "
                 f"filled={filled} avg_px={px} total={res.executed_price} comm={res.commission_rub}")
     return px, (res.commission_rub or 0.0)
 
 
-def _reconcile(broker, account_id, uid, expected_short_lots, logger):
-    """expected_short_lots >=0 (SHORT). actual balance negative=short."""
+def _reconcile(broker, account_id, uid, expected_signed_lots, logger):
     actual = 0
     for p in broker.get_positions(account_id):
         if p.instrument_uid == uid or p.figi:  # match by uid; figi fallback handled by caller mapping
             if p.instrument_uid == uid:
                 actual = int(p.balance)
-    exp = -expected_short_lots  # short -> negative balance
+    exp = expected_signed_lots
     if exp != actual:
         return False, f"exp_lots={exp} act_lots={actual}"
     return True, "OK"
@@ -164,7 +170,29 @@ def _reconcile(broker, account_id, uid, expected_short_lots, logger):
 def _msk(ts): return ts.tz_convert("Europe/Moscow")
 
 
-def _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_run):
+def breakout_direction(post, or_low, or_high, avg_volume, direction, confirmation, vol_mult):
+    """Return LONG/SHORT for the earliest eligible bar; ambiguous touch bars are skipped."""
+    candidates = []
+    for _, bar in post.iterrows():
+        if float(bar.volume) < vol_mult * avg_volume:
+            continue
+        short_hit = (float(bar.close) < or_low) if confirmation == "close" else (float(bar.low) <= or_low)
+        long_hit = (float(bar.close) > or_high) if confirmation == "close" else (float(bar.high) >= or_high)
+        short_hit = short_hit and direction in ("SHORT", "BOTH")
+        long_hit = long_hit and direction in ("LONG", "BOTH")
+        if short_hit and long_hit:
+            continue
+        if short_hit: candidates.append((bar.ts, "SHORT"))
+        if long_hit: candidates.append((bar.ts, "LONG"))
+    return min(candidates, key=lambda x: x[0])[1] if candidates else None
+
+
+def gross_pnl(direction, entry, exit_, qty, point_value_rub):
+    sign = 1 if direction == "LONG" else -1
+    return sign * (exit_ - entry) * qty * point_value_rub
+
+
+def _cycle(args, broker, account_id, uid, point_value_rub, db, logger, market_open, session, dry_run):
     now_utc = datetime.now(tz=timezone.utc)
     d = _today_msk(now_utc)
     or_s, or_e, t_exit = _t(args.or_start), _t(args.or_end), _t(args.time_exit)
@@ -184,7 +212,10 @@ def _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_
     open_t = dict(open_t) if open_t else None
 
     if not dry_run:
-        ok, det = _reconcile(broker, account_id, uid, args.contracts if open_t else 0, logger)
+        expected = 0
+        if open_t:
+            expected = int(open_t["qty"]) * (1 if open_t["direction"] == "LONG" else -1)
+        ok, det = _reconcile(broker, account_id, uid, expected, logger)
         if not ok:
             logger.error(f"RECONCILE_FAIL {det}"); db.event("RECONCILE_FAIL", det)
             return {"status": "RECONCILE_FAILED", "detail": det}
@@ -196,7 +227,7 @@ def _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_
         if len(orc) >= 5:
             oh, ol = float(orc.high.max()), float(orc.low.min())
             avgv = float(orc.volume.mean())
-            valid = (oh - ol) > 0 and (oh - ol) <= args.max_or_range
+            valid = args.min_or_range <= (oh - ol) <= args.max_or_range
             db.set_day(d, oh, ol, avgv, valid)
             logger.info(f"OR_SET {d} high={oh} low={ol} range={oh-ol:.0f} avgvol={avgv:.0f} valid={valid}")
             day = db.get_day(d)
@@ -204,18 +235,27 @@ def _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_
     # 2) manage open position (exit checks on latest closed bar + time)
     if open_t is not None:
         last = df.iloc[-1]
+        direction = open_t["direction"]
         exit_reason = None
         if now_msk_t >= t_exit:
             exit_reason = "TIME_EXIT"
-        elif float(last.high) >= open_t["stop"]:
-            exit_reason = "STOP"
-        elif float(last.low) <= open_t["take"]:
-            exit_reason = "TAKE"
+        elif direction == "SHORT":
+            if float(last.high) >= open_t["stop"]: exit_reason = "STOP"
+            elif float(last.low) <= open_t["take"]: exit_reason = "TAKE"
+        else:
+            if float(last.low) <= open_t["stop"]: exit_reason = "STOP"
+            elif float(last.high) >= open_t["take"]: exit_reason = "TAKE"
         if exit_reason:
-            xf, xc = _order(broker, account_id, uid, args.contracts, "BUY", dry_run, logger, f"{args.ticker}/EXIT")
+            side = "BUY" if direction == "SHORT" else "SELL"
+            expected_exit = open_t["stop"] if exit_reason == "STOP" else (
+                open_t["take"] if exit_reason == "TAKE" else float(last.close))
+            xf, xc = _order(broker, account_id, uid, open_t["qty"], side,
+                            dry_run, logger, f"{args.ticker}/EXIT",
+                            point_value_rub, expected_exit)
             exit_fill = xf if xf is not None else (open_t["stop"] if exit_reason == "STOP" else
                         (open_t["take"] if exit_reason == "TAKE" else float(last.close)))
-            gross = (open_t["entry_fill"] - exit_fill) * args.contracts  # SHORT, point_value=1
+            gross = gross_pnl(direction, open_t["entry_fill"], exit_fill,
+                              open_t["qty"], point_value_rub)
             comm = (open_t["commission_rub"] or 0) + xc
             net = gross - comm
             upd = dict(open_t); upd.update(status="CLOSED", exit_ts=now_utc.isoformat(), exit_fill=exit_fill,
@@ -234,35 +274,44 @@ def _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_
     if db.trades_today(d) >= 1:
         return {"status": "OK", "has_open": False}
 
-    post = df[(df.tt >= or_e) & (df.tt < t_exit)]
+    # Act only on the latest closed bar.  Searching the whole day here would
+    # replay a stale morning breakout as a market order after a restart.
+    post = df[(df.tt >= or_e) & (df.tt < t_exit)].tail(1)
     ol, oh, avgv = day["or_low"], day["or_high"], day["or_avg_vol"]
-    breakout = post[(post.low <= ol) & (post.volume >= args.breakout_vol_mult * avgv)]
-    if breakout.empty:
+    direction = breakout_direction(post, ol, oh, avgv, args.direction,
+                                   args.breakout_confirmation, args.breakout_vol_mult)
+    if direction is None:
         return {"status": "OK", "has_open": False, "or_ready": True, "or_low": ol}
 
-    # enter SHORT at market now (breakout confirmed)
-    ef, ec = _order(broker, account_id, uid, args.contracts, "SELL", dry_run, logger, f"{args.ticker}/ENTRY")
-    entry_fill = ef if ef is not None else ol
-    stop = oh
-    take = ol - args.take_r * (oh - ol)
-    tid = f"sborb:{args.ticker}:{d}"
-    db.upsert(dict(trade_id=tid, date_msk=d, ticker=args.ticker, direction="SHORT", status="OPEN",
+    trigger = ol if direction == "SHORT" else oh
+    side = "SELL" if direction == "SHORT" else "BUY"
+    ef, ec = _order(broker, account_id, uid, args.contracts, side,
+                    dry_run, logger, f"{args.ticker}/ENTRY", point_value_rub, trigger)
+    entry_fill = ef if ef is not None else trigger
+    risk = oh - ol
+    stop = oh if direction == "SHORT" else ol
+    take = entry_fill - args.take_r * risk if direction == "SHORT" else entry_fill + args.take_r * risk
+    tid = f"sborb:{args.ticker}:{d}:{direction}"
+    db.upsert(dict(trade_id=tid, date_msk=d, ticker=args.ticker, direction=direction, status="OPEN",
                    qty=args.contracts, entry_ts=now_utc.isoformat(), entry_fill=entry_fill, stop=stop, take=take,
                    exit_ts=None, exit_fill=None, exit_reason=None, gross_pnl_rub=None,
                    commission_rub=ec, net_pnl_rub=None, created_at=now_utc.isoformat(), updated_at=now_utc.isoformat()))
     db.mark_taken(d); db.bump_today(d)
-    logger.info(f"ORB_ENTRY SHORT {args.ticker} entry={entry_fill} stop={stop} take={take:.0f} (or_low={ol} or_high={oh})")
+    logger.info(f"ORB_ENTRY {direction} {args.ticker} entry={entry_fill} stop={stop} "
+                f"take={take:.0f} (or_low={ol} or_high={oh})")
     return {"status": "OK", "has_open": True, "or_low": ol}
 
 
-def _write_status(args, db, result, market_open, session, account_id, dry_run):
+def _write_status(args, db, result, market_open, session, account_id, dry_run, point_value_rub):
     closed = db.closed()
     net = sum((r["net_pnl_rub"] or 0) for r in closed)
-    status = {"strategy": "orb_short_sandbox", "contour": "sandbox", "dry_run": dry_run,
-              "account_id": account_id, "ticker": args.ticker,
+    status = {"strategy": "orb_v2_sandbox", "contour": "sandbox", "dry_run": dry_run,
+              "account_id": account_id, "ticker": args.ticker, "direction": args.direction,
               "params": {"or": f"{args.or_start}-{args.or_end}", "take_r": args.take_r,
+                         "min_or_range": args.min_or_range,
                          "max_or_range": args.max_or_range, "vol_mult": args.breakout_vol_mult,
-                         "contracts": args.contracts},
+                         "confirmation": args.breakout_confirmation,
+                         "contracts": args.contracts, "point_value_rub": point_value_rub},
               "market_open": market_open, "session": session, "last_cycle": result,
               "open_trades_total": len(db.all_open()), "closed_trades_total": len(closed),
               "net_pnl_rub_REAL": round(net, 1),
@@ -272,21 +321,23 @@ def _write_status(args, db, result, market_open, session, account_id, dry_run):
         json.dump(status, f, indent=2, default=str)
 
 
-def _resolve_uid(ticker, class_code, logger):
+def _resolve_instrument(ticker, class_code, logger):
     from src.tbank.client import get_tbank_client
     from src.tbank.settings import load_tbank_settings
-    from src.tbank.instruments import resolve_instrument
+    from src.tbank.instrument_specs import fetch_future_spec
     with get_tbank_client(load_tbank_settings(env="prod")) as c:
-        r = resolve_instrument(c, ticker, class_code)
-    logger.info(f"INSTRUMENT {ticker} uid={r['uid']} lot={r.get('lot')}")
-    return r["uid"]
+        r = fetch_future_spec(c, ticker, class_code)
+    if not r.point_value_rub:
+        raise RuntimeError(f"point_value_rub unavailable for {ticker}")
+    logger.info(f"INSTRUMENT {ticker} uid={r.uid} lot={r.lot} pv={r.point_value_rub}")
+    return r.uid, float(r.point_value_rub)
 
 
 def main():
     args = _parse_args(); load_dotenv()
     logger = _setup_logging(args.log_file); dry_run = args.dry_run
     logger.info("=" * 60)
-    logger.info(f"ORB SHORT SANDBOX — {args.ticker} OR {args.or_start}-{args.or_end} take_r={args.take_r} "
+    logger.info(f"ORB V2 SANDBOX — {args.ticker} {args.direction} OR {args.or_start}-{args.or_end} take_r={args.take_r} "
                 f"cap={args.max_or_range} vol_mult={args.breakout_vol_mult} dry_run={dry_run}")
     logger.info("=" * 60)
 
@@ -296,7 +347,7 @@ def main():
         if os.getenv(args.trading_enabled_env, "false").lower() != "true":
             raise SystemExit(f"{args.trading_enabled_env} != true — refusing to trade (or use --dry-run).")
 
-    uid = _resolve_uid(args.ticker, args.class_code, logger)
+    uid, point_value_rub = _resolve_instrument(args.ticker, args.class_code, logger)
     db = OrbDB(args.state_db)
 
     market_config = None
@@ -315,13 +366,15 @@ def main():
             session = get_session_name(now_utc, market_config); market_open = is_session_open(now_utc, market_config)
         if not market_open and not args.ignore_market_hours:
             logger.info(f"MARKET_CLOSED session={session}")
-            _write_status(args, db, {"status": "MARKET_CLOSED"}, market_open, session, account_id, dry_run)
+            _write_status(args, db, {"status": "MARKET_CLOSED"}, market_open, session,
+                          account_id, dry_run, point_value_rub)
             return
         try:
-            res = _cycle(args, broker, account_id, uid, db, logger, market_open, session, dry_run)
+            res = _cycle(args, broker, account_id, uid, point_value_rub, db, logger,
+                         market_open, session, dry_run)
         except Exception as e:
             logger.exception(f"CYCLE_ERROR: {e}"); res = {"status": "ERROR", "error": str(e)[:200]}
-        _write_status(args, db, res, market_open, session, account_id, dry_run)
+        _write_status(args, db, res, market_open, session, account_id, dry_run, point_value_rub)
 
     if dry_run:
         run_once(None, "DRY_RUN"); logger.info("DRY_RUN done."); return

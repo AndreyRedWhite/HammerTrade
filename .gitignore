@@ -36,6 +36,7 @@ env/
 # ─── Runtime outputs (re-generatable) ────────────────────────────────────────
 data/raw/
 data/paper/
+data/processed/
 out/
 reports/
 archives/

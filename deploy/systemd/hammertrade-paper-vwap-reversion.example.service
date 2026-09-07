@@ -1,0 +1,40 @@
+# Example only. Do not install until paper engine is implemented.
+# Requires: scripts/run_vwap_reversion_paper_trader.py (NOT YET CREATED)
+# Additional requirement: dual-fill accounting implemented and validated.
+# WARNING: VWAP Reversion edge destroyed at >= 2pt slippage.
+#          Verify avg fill slippage < 1.5pt on first 20 paper trades before continuing.
+# Target ticker: SiU6 (after rollover from SiM6)
+
+[Unit]
+Description=HammerTrade Paper Trader — VWAP Reversion SiU6 (no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_vwap_reversion_paper_trader.py \
+    --ticker SiU6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --direction SHORT \
+    --distance-mult 1.0 \
+    --stop-mult 1.0 \
+    --take-r 1.5 \
+    --take-mode one_r \
+    --atr-window 14 \
+    --max-trades-per-day 3 \
+    --state-db data/paper/paper_state_siu6_vwap_reversion.sqlite \
+    --status-file runtime/paper_status_SiU6_VWAP_REVERSION.json \
+    --csv-output out/paper/paper_trades_SiU6_VWAP_REVERSION.csv \
+    --log-file logs/paper_SiU6_VWAP_REVERSION.log \
+    --experiment-name vwap_reversion_vr_d1_s1_1_5r \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

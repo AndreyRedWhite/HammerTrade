@@ -1,0 +1,35 @@
+[Unit]
+Description=HammerTrade pairs v2 SANDBOX — TATN+RTKM 1h (virtual money, real fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_pairs_sandbox_trader.py \
+    --pairs TATNP:TATN@1h,RTKMP:RTKM@1h \
+    --class-code TQBR \
+    --z-window 50 \
+    --hedge-window 50 \
+    --min-correlation 0.70 \
+    --max-beta-change 0.25 \
+    --entry-z 2.0 \
+    --exit-z 0.5 \
+    --stop-z 4.0 \
+    --stop-loss-bps 300 \
+    --max-hold-bars 45 \
+    --notional-per-leg 1000000 \
+    --order-type limit \
+    --account-id-env SANDBOX_ACCOUNT_ID_PAIRS_V2 \
+    --trading-enabled-env SANDBOX_PAIRS_V2_ENABLED \
+    --state-db data/sandbox/sandbox_pairs_v2.sqlite \
+    --status-file runtime/sandbox_status_PAIRS_V2.json \
+    --log-file logs/sandbox_PAIRS_V2.log \
+    --market-hours-config configs/market_hours/moex_equities.yaml
+Restart=always
+RestartSec=15
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

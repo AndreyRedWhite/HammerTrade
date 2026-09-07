@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 
-from flask import Flask, Response, request
+from flask import Flask, Response, abort, request
 
 from src.reporting.fleet import build_reports
 from src.reporting.funnel import FunnelConfig, decide
@@ -42,6 +42,161 @@ _STATUS = {
     "FREEZE":  ("#cf222e", "#ffebe9"),
 }
 _STATUS_RANK = {"FREEZE": 0, "WATCH": 1, "ACTIVE": 2, "PROMOTE": 3}
+
+
+STRATEGY_CATALOG = {
+    "hammer": {
+        "title": "Hammer / свечной разворот",
+        "short": "Ищет молот или перевёрнутый молот и торгует подтверждённый локальный разворот.",
+        "kind": "Контртренд · свечной паттерн",
+        "market": "MOEX, внутридневные свечи",
+        "idea": (
+            "Длинная тень показывает резкий отказ рынка от экстремума. Стратегия входит только "
+            "после подтверждения: следующая цена должна пробить контрольный уровень сигнальной свечи."
+        ),
+        "entry": "Паттерн молота + фильтры качества свечи и подтверждающий пробой.",
+        "exit": "Фиксированный stop/take, временной выход или ограничение максимального удержания.",
+        "limits": (
+            "Редкий паттерн и высокая чувствительность к комиссиям, проскальзыванию и корректной "
+            "стоимости пункта фьючерса. Исторические варианты требуют повторной экономической проверки."
+        ),
+        "watch": "Число сделок, ONE_BAR_STOP, средний убыток, PF после комиссии и MaxDD.",
+    },
+    "momentum-continuation": {
+        "title": "Momentum continuation",
+        "short": "Продолжение сильного внутридневного импульса после подтверждения направления.",
+        "kind": "Тренд · внутридневной импульс",
+        "market": "Ликвидные фьючерсы MOEX",
+        "idea": (
+            "Сильное направленное движение нередко продолжается ещё несколько свечей. Сигнал "
+            "оценивает силу импульса и входит по направлению движения, а не пытается поймать разворот."
+        ),
+        "entry": "Импульсная свеча, достаточный диапазон/объём и подтверждение продолжения.",
+        "exit": "Stop/take и ограничение времени в позиции; позиция не переносится бесконтрольно.",
+        "limits": "Страдает во флэте и после уже исчерпанного импульса; издержки особенно важны на частых входах.",
+        "watch": "Долю ложных продолжений, PF, среднее удержание и PnL по инструментам/направлениям.",
+    },
+    "orb": {
+        "title": "Opening Range Breakout (ORB)",
+        "short": "Торгует выход цены из диапазона первого часа основной сессии.",
+        "kind": "Пробой · intraday",
+        "market": "IMOEXF и другие ликвидные инструменты MOEX",
+        "idea": (
+            "Первый час формирует ориентир спроса и предложения. Закрытие свечи за границей "
+            "диапазона при повышенном объёме рассматривается как начало направленного движения."
+        ),
+        "entry": "После закрытия opening range: LONG выше high или SHORT ниже low; ORB v2 требует close-confirmation.",
+        "exit": "Стоп за противоположной стороной/по R, take-profit и обязательный выход к концу сессии.",
+        "limits": "Ложные пробои в боковом рынке; слишком широкий или слишком узкий утренний диапазон блокируется.",
+        "watch": "Качество opening range, сторону входа, PF, MaxDD и отсутствие replay старого сигнала после рестарта.",
+    },
+    "orf": {
+        "title": "Opening Range Fade (ORF)",
+        "short": "Торгует возврат внутрь утреннего диапазона после неудавшегося пробоя.",
+        "kind": "Контртренд · ложный пробой",
+        "market": "Ликвидные фьючерсы MOEX",
+        "idea": (
+            "Если выход из opening range быстро отвергнут и цена возвращается внутрь, участники пробоя "
+            "оказываются в ловушке. Стратегия торгует движение обратно к центру диапазона."
+        ),
+        "entry": "Пробой границы, подтверждённый возврат внутрь диапазона и фильтр допустимого времени.",
+        "exit": "Стоп за экстремумом ложного пробоя; цель — середина или противоположная часть диапазона.",
+        "limits": "Опасна в настоящие трендовые дни, когда первый пробой не является ложным.",
+        "watch": "Частоту подтверждений, долю трендовых стопов, PF после фактических издержек.",
+    },
+    "vwap-reversion": {
+        "title": "VWAP mean reversion",
+        "short": "Ищет чрезмерное внутридневное отклонение от средневзвешенной цены и возврат к ней.",
+        "kind": "Контртренд · mean reversion",
+        "market": "Ликвидные инструменты MOEX",
+        "idea": (
+            "VWAP приближённо отражает среднюю цену участников с учётом объёма. Аномальное отклонение "
+            "без устойчивого тренда может схлопнуться обратно к справедливой внутридневной области."
+        ),
+        "entry": "Отклонение от VWAP выше порога плюс фильтры режима, волатильности и времени.",
+        "exit": "Возврат к VWAP/частичная нормализация, защитный стоп и конец торгового дня.",
+        "limits": "Против сильного тренда отклонение может расширяться; без regime filter стратегия ловит падающий нож.",
+        "watch": "PnL отдельно по режимам, величину отклонения на входе, стопы и стоимость оборота.",
+    },
+    "pairs": {
+        "title": "Pairs statistical arbitrage",
+        "short": "Торгует расхождение двух связанных акций нейтральной длинной/короткой конструкцией.",
+        "kind": "Market-neutral · относительная стоимость",
+        "market": "Пары обыкновенных и привилегированных акций MOEX",
+        "idea": (
+            "У связанных бумаг существует относительно стабильный спред. При аномальном z-score "
+            "стратегия покупает отставшую ногу и продаёт переоценённую, ожидая схождения."
+        ),
+        "entry": "|z-score| выше порога при достаточной корреляции и стабильном rolling hedge ratio.",
+        "exit": "Схождение z-score, PnL-stop, экстремальный stop-z или максимальный срок удержания.",
+        "limits": "Связь между бумагами может структурно сломаться; двухногая заявка несёт риск неполного исполнения.",
+        "watch": "Correlation, beta drift, z-score, состояние обеих ног, net PnL и reconcile errors.",
+    },
+    "funding-carry": {
+        "title": "Perpetual funding carry",
+        "short": "Собирает разницу между вечным и квартальным фьючерсом при достаточном запасе над издержками.",
+        "kind": "Market-neutral · carry",
+        "market": "IMOEXF/MM и GLDRUBF/GL",
+        "idea": (
+            "Стратегия одновременно держит противоположные позиции в perpetual и квартальном контракте. "
+            "Доход ожидается из funding/carry, а не из направления базового актива."
+        ),
+        "entry": "Ожидаемый дневной carry превышает ручной порог и минимум в 2× покрывает полный цикл издержек.",
+        "exit": "Исчезновение carry, приближение экспирации/ролл или нарушение целостности конструкции.",
+        "limits": "Базис меняется, funding не гарантирован; критичны синхронность ног и правильный point value.",
+        "watch": "Carry bp/day, cost gate, front contract/DTE, обе ноги, реальные комиссии и ошибки reconciliation.",
+    },
+    "volatility-breakout": {
+        "title": "Volatility compression breakout",
+        "short": "Ждёт сжатия волатильности, затем торгует выход из Donchian-канала.",
+        "kind": "Тренд · расширение волатильности",
+        "market": "IMOEXF, 1-часовые свечи",
+        "idea": (
+            "Периоды низкого ATR часто сменяются расширением диапазона. После подтверждённого сжатия "
+            "стратегия входит в сторону нового пробоя ранее известного ценового канала."
+        ),
+        "entry": "Недавнее ATR-сжатие + LONG/SHORT пробой сдвинутого Donchian-канала без look-ahead.",
+        "exit": "ATR-stop, take-profit в R или выход через более короткий обратный канал.",
+        "limits": "Серия ложных пробоев во флэте; параметры канала и compression quantile чувствительны к режиму.",
+        "watch": "ATR percentile, направление сигнала, цену канала, R результата и последовательность стопов.",
+    },
+    "xsec-momentum": {
+        "title": "Cross-sectional momentum 6–1",
+        "short": "Покупает лидеров и продаёт аутсайдеров российского рынка единым 3×3 портфелем.",
+        "kind": "Market-neutral · среднесрочный momentum",
+        "market": "Ликвидные акции MOEX, дневные свечи",
+        "idea": (
+            "Бумаги с сильной относительной динамикой за последние месяцы склонны некоторое время "
+            "оставаться лидерами. Последний месяц пропускается, чтобы уменьшить краткосрочный reversal."
+        ),
+        "entry": "Рейтинг доходности за 126 дней с пропуском последних 21 дня: 3 LONG и 3 SHORT.",
+        "exit": "Полная перебалансировка корзины каждые 21 день в открытую сессию.",
+        "limits": "Momentum crashes, корпоративные события и short availability; текущая дневная свеча исключается.",
+        "watch": "Состав обеих корзин, gross/net exposure, turnover, holding-period PnL и комиссии.",
+    },
+}
+
+
+def _strategy_slug(unit: str) -> str:
+    """Map a concrete service unit to its human strategy description."""
+    name = unit.lower()
+    if "xsec" in name:
+        return "xsec-momentum"
+    if "carry" in name:
+        return "funding-carry"
+    if "volbreak" in name or "volatility" in name:
+        return "volatility-breakout"
+    if "pairs" in name:
+        return "pairs"
+    if "orf" in name:
+        return "orf"
+    if "vwap" in name:
+        return "vwap-reversion"
+    if "orb" in name:
+        return "orb"
+    if "momentum" in name:
+        return "momentum-continuation"
+    return "hammer"
 
 
 def _check_auth(user: str, pw: str) -> bool:
@@ -121,6 +276,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
  margin:0;background:#f6f8fa;color:#1f2328}
 .wrap{max-width:1280px;margin:0 auto;padding:18px}
 h1{font-size:20px;margin:0 0 2px}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:#eaeef2;padding:3px;border-radius:9px}
+.tabs a{color:#424a53;text-decoration:none;font-size:13px;font-weight:600;padding:6px 11px;border-radius:7px}
+.tabs a:hover{background:#f6f8fa}.tabs a.active{background:#fff;color:#0969da;box-shadow:0 1px 2px rgba(27,31,36,.08)}
+.strategy-link{color:#0969da;text-decoration:none;font-weight:600}
+.strategy-link:hover{text-decoration:underline}
 .meta{color:#6e7781;font-size:12px;margin-bottom:14px}
 .cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 .card{background:#fff;border:1px solid #d0d7de;border-radius:10px;padding:12px 16px;
@@ -152,6 +313,20 @@ tbody tr:hover td{background:#f6f8fa}
 .controls .tog{display:flex;gap:5px;align-items:center;cursor:pointer}
 .famtbl{font-size:12.5px;margin-bottom:6px}
 .famtbl td,.famtbl th{padding:6px 10px}
+.strategy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.strategy-card{display:block;background:#fff;border:1px solid #d0d7de;border-radius:10px;padding:16px;
+ color:#1f2328;text-decoration:none;box-shadow:0 1px 2px rgba(27,31,36,.04)}
+.strategy-card:hover{border-color:#0969da;box-shadow:0 3px 10px rgba(9,105,218,.10)}
+.strategy-card h2{font-size:16px;margin:0 0 5px;color:#0969da}
+.strategy-card p{font-size:13px;line-height:1.45;margin:8px 0;color:#424a53}
+.eyebrow{font-size:11px;color:#6e7781;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.detail{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:14px;align-items:start}
+.prose,.sidecard{background:#fff;border:1px solid #d0d7de;border-radius:10px;padding:18px}
+.prose h2,.sidecard h2{font-size:14px;margin:18px 0 6px}.prose h2:first-child,.sidecard h2:first-child{margin-top:0}
+.prose p,.sidecard p,.sidecard li{font-size:13.5px;line-height:1.55;margin:0;color:#424a53}
+.sidecard ul{margin:6px 0 0;padding-left:18px}.back{display:inline-block;margin:2px 0 14px;color:#0969da;text-decoration:none;font-size:13px}
+.back:hover{text-decoration:underline}
+@media(max-width:760px){.detail{grid-template-columns:1fr}.wrap{padding:12px}}
 """
 
 _JS = """
@@ -211,6 +386,25 @@ def _badge(status: str) -> str:
     return f"<span class='badge' style='color:{fg};background:{bg}'>{_esc(status)}</span>"
 
 
+def _nav(active: str) -> str:
+    overview = " active" if active == "overview" else ""
+    strategies = " active" if active == "strategies" else ""
+    return (
+        "<nav class='tabs' aria-label='Разделы dashboard'>"
+        f"<a class='{overview.strip()}' href='/'>Обзор</a>"
+        f"<a class='{strategies.strip()}' href='/strategies'>Стратегии</a>"
+        "</nav>"
+    )
+
+
+def _strategy_link(unit: str, label: str | None = None) -> str:
+    slug = _strategy_slug(unit)
+    return (
+        f"<a class='strategy-link' href='/strategies/{_esc(slug)}'>"
+        f"{_esc(label if label is not None else unit)}</a>"
+    )
+
+
 def _build_rows(base: Path, now: datetime):
     d1 = {r.svc.unit: r for r in build_reports(base, now, 1)}
     weekly = build_reports(base, now, 7)
@@ -224,6 +418,7 @@ def _build_rows(base: Path, now: datetime):
                    or r.svc.active != "active")
         rows.append({
             "status": r.status_class, "unit": r.svc.unit.replace("hammertrade-", "").replace(".service", ""),
+            "strategy_slug": _strategy_slug(r.svc.unit),
             "family": r.svc.family, "instr": r.svc.instrument, "dir": r.svc.direction or "—",
             "trades": m.trades, "pnl": m.pnl_rub, "pf": m.pf, "wr": m.wr,
             "maxdd": m.max_dd_rub, "avgw": m.avg_win, "avgl": m.avg_loss,
@@ -243,6 +438,80 @@ def create_app() -> Flask:
     @app.route("/healthz")
     def healthz():
         return "ok", 200
+
+    @app.route("/strategies")
+    @requires_auth
+    def strategies():
+        cards = "".join(
+            "<a class='strategy-card' href='/strategies/{slug}'>"
+            "<div class='eyebrow'>{kind}</div><h2>{title}</h2>"
+            "<p>{short}</p><div class='hint'>{market} →</div></a>".format(
+                slug=_esc(slug),
+                kind=_esc(item["kind"]),
+                title=_esc(item["title"]),
+                short=_esc(item["short"]),
+                market=_esc(item["market"]),
+            )
+            for slug, item in STRATEGY_CATALOG.items()
+        )
+        page = (
+            "<!doctype html><html lang='ru'><head><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            "<title>HammerTrade — Стратегии</title>"
+            f"<style>{_CSS}</style></head><body><div class='wrap'>"
+            "<div class='topbar'><div><h1>Стратегии HammerTrade</h1>"
+            "<div class='meta'>Что именно торгуют сервисы, откуда берётся сигнал и где стратегия ломается.</div>"
+            f"</div>{_nav('strategies')}</div>"
+            f"<div class='strategy-grid'>{cards}</div>"
+            "</div></body></html>"
+        )
+        return Response(page, mimetype="text/html")
+
+    @app.route("/strategies/<slug>")
+    @requires_auth
+    def strategy_detail(slug: str):
+        item = STRATEGY_CATALOG.get(slug)
+        if item is None:
+            abort(404)
+
+        now = datetime.now(tz=timezone.utc)
+        rows, _ = _build_rows(BASE_DIR, now)
+        related = [row for row in rows if row["strategy_slug"] == slug]
+        if related:
+            service_items = "".join(
+                "<li>{name} — {state}; {instr} {direction}</li>".format(
+                    name=_esc(row["unit"]),
+                    state=_esc(row["active"]),
+                    instr=_esc(row["instr"]),
+                    direction=_esc(row["dir"]),
+                )
+                for row in related
+            )
+            services_html = f"<ul>{service_items}</ul>"
+        else:
+            services_html = "<p>Сервисы этого типа сейчас не запущены.</p>"
+
+        page = (
+            "<!doctype html><html lang='ru'><head><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            f"<title>HammerTrade — {_esc(item['title'])}</title>"
+            f"<style>{_CSS}</style></head><body><div class='wrap'>"
+            "<div class='topbar'><div>"
+            f"<div class='eyebrow'>{_esc(item['kind'])}</div><h1>{_esc(item['title'])}</h1>"
+            f"<div class='meta'>{_esc(item['short'])}</div></div>{_nav('strategies')}</div>"
+            "<a class='back' href='/strategies'>← Все стратегии</a>"
+            "<div class='detail'><main class='prose'>"
+            f"<h2>Идея</h2><p>{_esc(item['idea'])}</p>"
+            f"<h2>Как входит</h2><p>{_esc(item['entry'])}</p>"
+            f"<h2>Как выходит</h2><p>{_esc(item['exit'])}</p>"
+            f"<h2>Где может сломаться</h2><p>{_esc(item['limits'])}</p>"
+            "</main><aside class='sidecard'>"
+            f"<h2>Рынок и горизонт</h2><p>{_esc(item['market'])}</p>"
+            f"<h2>Что смотреть в dashboard</h2><p>{_esc(item['watch'])}</p>"
+            f"<h2>Текущие сервисы</h2>{services_html}"
+            "</aside></div></div></body></html>"
+        )
+        return Response(page, mimetype="text/html")
 
     @app.route("/")
     @requires_auth
@@ -292,7 +561,7 @@ def create_app() -> Flask:
                 fg, bg = _VERDICT[r["verdict"]]
                 fl += (f"<div class='candcard' style='border-left-color:{fg}'>"
                        f"<span class='badge' style='color:{fg};background:{bg}'>{_esc(r['verdict'])}</span> "
-                       f"<b>{_esc(r['unit'])}</b> · {_esc(r['family'])} {_esc(r['instr'])} "
+                       f"{_strategy_link(r['unit'])} · {_esc(r['family'])} {_esc(r['instr'])} "
                        f"{_esc(r['dir'])} · stage: {_esc(r['stage'])} → {_esc(r['advance_to'])}"
                        f"<br><span style='color:#57606a'>{_esc(r['rationale'])}</span></div>")
         else:
@@ -392,7 +661,7 @@ def create_app() -> Flask:
         if cands:
             for r in cands:
                 tag = "SANDBOX (running)" if r["family"] == "sandbox" else "PROMOTE candidate"
-                cand_html += (f"<div class='candcard'><b>{_esc(r['unit'])}</b> · {_esc(tag)} · "
+                cand_html += (f"<div class='candcard'>{_strategy_link(r['unit'])} · {_esc(tag)} · "
                               f"{_esc(r['family'])} {_esc(r['instr'])} {_esc(r['dir'])} · "
                               f"{r['trades']} tr · PF {_fmt(r['pf'],2)} · WR {_fmt(r['wr'],0)}% · "
                               f"PnL {_fmt(r['pnl'])}₽</div>")
@@ -417,7 +686,7 @@ def create_app() -> Flask:
                 f"<tr data-family='{_esc(r['family'])}' data-status='{_esc(r['status'])}' "
                 f"data-problem='{'1' if r['problem'] else '0'}'>"
                 f"<td class='l' data-sort='{_STATUS_RANK.get(r['status'],9)}'>{_badge(r['status'])}</td>"
-                f"<td class='l'>{_esc(r['unit'])}{warn}</td>"
+                f"<td class='l'>{_strategy_link(r['unit'])}{warn}</td>"
                 f"<td class='l'>{_esc(r['family'])}</td>"
                 f"<td class='l'>{_esc(r['instr'])}</td>"
                 f"<td class='l'>{_esc(r['dir'])}</td>"
@@ -441,9 +710,10 @@ def create_app() -> Flask:
             "<meta http-equiv='refresh' content='120'>"
             "<title>HammerTrade Fleet</title>"
             f"<style>{_CSS}</style></head><body><div class='wrap'>"
-            "<h1>HammerTrade — Fleet Dashboard</h1>"
+            "<div class='topbar'><div><h1>HammerTrade — Fleet Dashboard</h1>"
             f"<div class='meta'>Обновлено {now.strftime('%Y-%m-%d %H:%M UTC')} · автообновление 120с · "
             "PF/WR/MaxDD/avg — за всё время · только чтение</div>"
+            f"</div>{_nav('overview')}</div>"
             + cards
             + "<h2>Портфель / экспозиция</h2>" + portfolio_html
             + "<h2>Funnel — решения по стратегиям</h2>" + funnel_html

@@ -1,0 +1,28 @@
+[Unit]
+Description=HammerTrade D1 cross-sectional momentum SANDBOX (virtual money, real fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_xsec_momentum_sandbox_trader.py \
+    --lookback-days 126 \
+    --skip-days 21 \
+    --long-count 3 \
+    --short-count 3 \
+    --rebalance-interval-days 21 \
+    --notional-per-name 1000000 \
+    --account-id-env SANDBOX_ACCOUNT_ID_XSEC \
+    --trading-enabled-env SANDBOX_XSEC_ENABLED \
+    --state-db data/sandbox/sandbox_xsec_momentum.sqlite \
+    --status-file runtime/sandbox_status_XSEC_MOMENTUM.json \
+    --log-file logs/sandbox_XSEC_MOMENTUM.log \
+    --market-hours-config configs/market_hours/moex_equities.yaml
+Restart=always
+RestartSec=30
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

@@ -127,3 +127,31 @@ def test_never_prints_token_value(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert secret not in captured.out
     assert secret not in captured.err
+
+
+def test_dedicated_creates_named_account_when_other_accounts_exist(monkeypatch, capsys):
+    monkeypatch.setenv("SANDBOX_TOKEN", "dummy")
+    fake_broker = _FakeBroker(
+        accounts=[{"id": "old", "name": "other", "status": "OPEN"}],
+        opened_account_id="dedicated-new",
+    )
+    _patch_broker(monkeypatch, fake_broker)
+    monkeypatch.setattr(sys, "argv", ["sandbox_account_setup.py", "--dedicated",
+                                      "--account-name", "hammertrade-xsec"])
+    m.main()
+    assert fake_broker.open_account_calls == ["hammertrade-xsec"]
+    assert "SANDBOX_ACCOUNT_ID=dedicated-new" in capsys.readouterr().out
+
+
+def test_dedicated_reuses_matching_named_account(monkeypatch, capsys):
+    monkeypatch.setenv("SANDBOX_TOKEN", "dummy")
+    fake_broker = _FakeBroker(accounts=[
+        {"id": "other", "name": "other", "status": "OPEN"},
+        {"id": "match", "name": "hammertrade-xsec", "status": "OPEN"},
+    ])
+    _patch_broker(monkeypatch, fake_broker)
+    monkeypatch.setattr(sys, "argv", ["sandbox_account_setup.py", "--dedicated",
+                                      "--account-name", "hammertrade-xsec"])
+    m.main()
+    assert fake_broker.open_account_calls == []
+    assert "SANDBOX_ACCOUNT_ID=match" in capsys.readouterr().out

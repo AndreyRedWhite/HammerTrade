@@ -107,3 +107,10 @@ def test_cumulative_curve_downsample():
     trades = [_t(100 - i, 1) for i in range(100)]
     c = cumulative_curve(trades, max_points=20)
     assert len(c) == 20
+
+
+def test_new_sandbox_services_are_registered_for_dashboard():
+    from src.reporting.fleet import SCRIPT_FAMILY
+    assert SCRIPT_FAMILY["run_volatility_breakout_sandbox_trader.py"][1] == \
+        "volatility_breakout_trades"
+    assert SCRIPT_FAMILY["run_xsec_momentum_sandbox_trader.py"][1] == "xsec_trades"

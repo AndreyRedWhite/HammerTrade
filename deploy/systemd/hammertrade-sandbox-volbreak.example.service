@@ -1,0 +1,35 @@
+[Unit]
+Description=HammerTrade volatility breakout SANDBOX — IMOEXF 1h (virtual money, real fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_volatility_breakout_sandbox_trader.py \
+    --ticker IMOEXF \
+    --class-code SPBFUT \
+    --timeframe 1h \
+    --direction BOTH \
+    --atr-window 14 \
+    --channel-window 20 \
+    --compression-lookback 100 \
+    --compression-quantile 0.25 \
+    --compression-recent-bars 5 \
+    --exit-channel-window 10 \
+    --stop-atr 2.0 \
+    --take-r 3.0 \
+    --contracts 50 \
+    --account-id-env SANDBOX_ACCOUNT_ID_VOLBREAK \
+    --trading-enabled-env SANDBOX_VOLBREAK_ENABLED \
+    --state-db data/sandbox/sandbox_volbreak_imoexf.sqlite \
+    --status-file runtime/sandbox_status_VOLBREAK_IMOEXF.json \
+    --log-file logs/sandbox_VOLBREAK_IMOEXF.log \
+    --market-hours-config configs/market_hours/moex_futures.yaml
+Restart=always
+RestartSec=15
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

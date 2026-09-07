@@ -53,6 +53,10 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--entry-z", type=float, default=2.0)
     p.add_argument("--exit-z", type=float, default=0.5)
     p.add_argument("--stop-z", type=float, default=4.0)
+    p.add_argument("--hedge-window", type=int, default=None,
+                   help="Rolling hedge-ratio window; omitted preserves 1:1 spread")
+    p.add_argument("--min-correlation", type=float, default=None)
+    p.add_argument("--max-beta-change", type=float, default=None)
     p.add_argument("--stop-loss-bps", type=float, default=None,
                    help="Hard stop on unrealized loss, in bps of ONE leg's notional "
                         "(300 = 3%% = 600 RUB at 20k/leg). --stop-z cannot bound the loss "
@@ -481,7 +485,11 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
     if pref_df is None or ord_df is None or pref_df.empty or ord_df.empty:
         return {"pair": pair, "status": "NO_CANDLES"}
 
-    pdf = compute_spread_z(pref_df, ord_df, timeframe="1min", z_window=args.z_window)
+    pdf = compute_spread_z(
+        pref_df, ord_df, timeframe="1min", z_window=args.z_window,
+        hedge_window=args.hedge_window, min_correlation=args.min_correlation,
+        max_beta_change=args.max_beta_change,
+    )
     horizon = now_utc - timedelta(minutes=_bar_minutes(tf))
     pdf = pdf[pdf["timestamp"] <= horizon].reset_index(drop=True)
     if pdf.empty or pd.isna(pdf["z"].iloc[-1]):
@@ -525,6 +533,9 @@ def _process_pair(args, broker, account_id, db, logger, instruments, now_utc,
                 pass
             elif daily["trades_today"] >= args.max_trades_per_day:
                 logger.info(f"DAILY_CAP pair={pair} trades_today={daily['trades_today']}")
+            elif not bool(bar.get("entry_allowed", True)):
+                logger.info(f"STABILITY_BLOCK pair={pair} corr={bar.get('corr')} "
+                            f"beta_change={bar.get('beta_change')}")
             else:
                 direction = "SHORT_SPREAD" if z >= args.entry_z else ("LONG_SPREAD" if z <= -args.entry_z else None)
                 if direction:
@@ -580,7 +591,10 @@ def _write_status(args, db, pair_results, market_open, session, fetch_status, ac
         "account_id": account_id, "pairs": args.pairs,
         "params": {"z_window": args.z_window, "entry_z": args.entry_z, "exit_z": args.exit_z,
                    "stop_z": args.stop_z, "max_hold_bars": args.max_hold_bars,
-                   "notional_per_leg": args.notional_per_leg, "order_type": args.order_type},
+                   "notional_per_leg": args.notional_per_leg, "order_type": args.order_type,
+                   "hedge_window": args.hedge_window,
+                   "min_correlation": args.min_correlation,
+                   "max_beta_change": args.max_beta_change},
         "market_open": market_open, "session": session, "fetch_status": fetch_status,
         "per_pair": pair_results, "open_trades_total": len(db.all_open()),
         "closed_trades_total": len(closed), "wins": wins,
@@ -638,6 +652,8 @@ def main():
                 f"max_hold={args.max_hold_bars} notional/leg={args.notional_per_leg}")
     logger.info("=" * 60)
 
+    if os.getenv("TINVEST_LIVE_TRADING_TOKEN"):
+        raise SystemExit("live trading token present — refusing to run sandbox executor")
     if not dry_run:
         if not os.getenv("SANDBOX_TOKEN"):
             raise SystemExit("SANDBOX_TOKEN missing — refusing to place sandbox orders.")

@@ -1,0 +1,30 @@
+[Unit]
+Description=HammerTrade Paper Trader — ORB or60_short2r (no real orders)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orb_paper_trader.py \
+    --ticker SiM6 \
+    --class-code SPBFUT \
+    --timeframe 1m \
+    --direction SHORT \
+    --opening-range-start 10:00 \
+    --opening-range-end 11:00 \
+    --take-r 2.0 \
+    --state-db data/paper/paper_state_orb.sqlite \
+    --status-file runtime/paper_status_SiM6_ORB.json \
+    --csv-output out/paper/paper_trades_SiM6_ORB.csv \
+    --log-file logs/paper_SiM6_ORB.log \
+    --experiment-name orb_or60_short2r \
+    --market-hours-config configs/market_hours/moex_futures.yaml \
+    --api-timeout-sec 10
+Restart=always
+RestartSec=10
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,34 @@
+[Unit]
+Description=HammerTrade ORB v2 SANDBOX — IMOEXF two-sided (virtual money, real fills)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hammertrade
+EnvironmentFile=/opt/hammertrade/.env
+ExecStart=/opt/hammertrade/.venv/bin/python scripts/run_orb_sandbox_trader.py \
+    --ticker IMOEXF \
+    --class-code SPBFUT \
+    --direction BOTH \
+    --or-start 10:00 \
+    --or-end 11:00 \
+    --time-exit 18:40 \
+    --take-r 3.0 \
+    --min-or-range 5 \
+    --max-or-range 150 \
+    --breakout-vol-mult 1.5 \
+    --breakout-confirmation close \
+    --contracts 50 \
+    --account-id-env SANDBOX_ACCOUNT_ID_ORB_V2 \
+    --trading-enabled-env SANDBOX_ORB_V2_ENABLED \
+    --state-db data/sandbox/sandbox_orb_v2_imoexf.sqlite \
+    --status-file runtime/sandbox_status_ORB_V2_IMOEXF.json \
+    --log-file logs/sandbox_ORB_V2_IMOEXF.log \
+    --market-hours-config configs/market_hours/moex_futures.yaml
+Restart=always
+RestartSec=15
+User=vorontsov
+
+[Install]
+WantedBy=multi-user.target
