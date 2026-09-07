@@ -39,6 +39,40 @@ def _bar_pnl(direction: str, pref_entry: float, ord_entry: float,
     return gross - cost
 
 
+def _fill_pending_exit(
+    open_trade: PairPaperTrade,
+    pref_open: float,
+    ord_open: float,
+    pair_name: str,
+    notional_per_leg: float,
+    cost_bps_per_leg_side: float,
+    logs: list[str],
+) -> tuple[PairPaperTrade, list[str]]:
+    """Fill an exit that was signalled on the previous bar's close.
+
+    Both ends of ``pnl_rub_realistic`` are prices a live trader could actually
+    get: entry at the open after the entry signal, exit at the open after the
+    exit signal.
+    """
+    open_trade.pref_exit_market_fill = pref_open
+    open_trade.ord_exit_market_fill = ord_open
+    open_trade.status = PairTradeStatus.CLOSED
+    open_trade.pnl_rub_realistic = _bar_pnl(
+        open_trade.direction,
+        open_trade.pref_market_fill or open_trade.pref_entry_price,
+        open_trade.ord_market_fill or open_trade.ord_entry_price,
+        pref_open, ord_open, notional_per_leg, cost_bps_per_leg_side,
+    )
+    theoretical = open_trade.pnl_rub if open_trade.pnl_rub is not None else float("nan")
+    logs.append(
+        f"PAIR_EXIT_FILLED pair={pair_name} "
+        f"reason={open_trade.exit_reason.value if open_trade.exit_reason else '?'} "
+        f"pnl_rub_realistic={open_trade.pnl_rub_realistic:.1f} "
+        f"(theoretical was {theoretical:.1f})"
+    )
+    return open_trade, logs
+
+
 def process_pair_bar(
     bar: pd.Series,
     open_trade: Optional[PairPaperTrade],
@@ -69,8 +103,6 @@ def process_pair_bar(
     logs: list[str] = []
 
     z = bar["z"]
-    if pd.isna(z):
-        return None, logs
 
     ts = bar["timestamp"]
     if isinstance(ts, str):
@@ -82,8 +114,23 @@ def process_pair_bar(
     ord_open = float(bar["ord_open"])
     ord_close = float(bar["ord_close"])
 
+    # A pending exit fills on price alone and must NOT wait for a usable z — the
+    # position is already out of the market by intent, and leaving it in
+    # PENDING_EXIT because the z-window happens to be short would strand it.
+    if open_trade is not None and open_trade.status == PairTradeStatus.PENDING_EXIT:
+        return _fill_pending_exit(
+            open_trade, pref_open, ord_open,
+            pair_name, notional_per_leg, cost_bps_per_leg_side, logs,
+        )
+
+    if pd.isna(z):
+        return None, logs
+
     # ── No open trade: look for entry ─────────────────────────────────────────
     if open_trade is None or open_trade.status == PairTradeStatus.CLOSED:
+        if "entry_allowed" in bar and not bool(bar["entry_allowed"]):
+            logs.append(f"PAIR_ENTRY_BLOCKED pair={pair_name} unstable_relationship")
+            return None, logs
         direction = None
         if z >= entry_z:
             direction = "SHORT_SPREAD"
@@ -152,8 +199,13 @@ def process_pair_bar(
     if exit_reason is None:
         return open_trade, logs  # still open, persist updated bars_held/market fill
 
-    # Close at signal bar close (theoretical)
-    open_trade.status = PairTradeStatus.CLOSED
+    # The exit SIGNAL fires here, on this bar's close. The FILL cannot: a live
+    # trader learns the close only once the bar is over. So the trade goes to
+    # PENDING_EXIT and is filled at the next bar's open, which is where
+    # pnl_rub_realistic comes from. pnl_rub / pnl_rub_market are still recorded
+    # at the signal close so old reports remain comparable — but they book a
+    # price that was never available and must not drive a funnel verdict.
+    open_trade.status = PairTradeStatus.PENDING_EXIT
     open_trade.exit_timestamp = ts
     open_trade.exit_z = float(z)
     open_trade.pref_exit_price = pref_close
@@ -182,6 +234,9 @@ def compute_spread_z(
     *,
     timeframe: str,
     z_window: int,
+    hedge_window: Optional[int] = None,
+    min_correlation: Optional[float] = None,
+    max_beta_change: Optional[float] = None,
 ) -> pd.DataFrame:
     """Align two legs, resample, compute log-spread and rolling z-score.
 
@@ -208,8 +263,27 @@ def compute_spread_z(
         return pair.reset_index()
 
     import numpy as np
-    pair["spread"] = np.log(pair["pref_close"]) - np.log(pair["ord_close"])
+    log_pref = np.log(pair["pref_close"])
+    log_ord = np.log(pair["ord_close"])
+    stability_window = hedge_window or z_window
+    pair["corr"] = log_pref.rolling(stability_window).corr(log_ord)
+    if hedge_window:
+        variance = log_ord.rolling(hedge_window).var().replace(0, np.nan)
+        pair["beta"] = log_pref.rolling(hedge_window).cov(log_ord) / variance
+        pair["spread"] = log_pref - pair["beta"] * log_ord
+        compare_lag = max(1, hedge_window // 4)
+        pair["beta_change"] = (pair["beta"] / pair["beta"].shift(compare_lag) - 1).abs()
+    else:
+        pair["beta"] = 1.0
+        pair["beta_change"] = 0.0
+        pair["spread"] = log_pref - log_ord
     pair["mu"] = pair["spread"].rolling(z_window).mean()
     pair["sd"] = pair["spread"].rolling(z_window).std()
     pair["z"] = (pair["spread"] - pair["mu"]) / pair["sd"]
+    pair["entry_allowed"] = True
+    if min_correlation is not None:
+        pair["entry_allowed"] &= pair["corr"].abs() >= min_correlation
+    if max_beta_change is not None:
+        pair["entry_allowed"] &= pair["beta_change"] <= max_beta_change
+    pair["entry_allowed"] = pair["entry_allowed"].fillna(False)
     return pair.reset_index()

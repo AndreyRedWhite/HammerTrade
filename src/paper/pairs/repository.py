@@ -45,11 +45,22 @@ CREATE TABLE IF NOT EXISTS pairs_trades (
     exit_reason TEXT,
     pnl_rub REAL,
     pnl_rub_market REAL,
+    pref_exit_market_fill REAL,
+    ord_exit_market_fill REAL,
+    pnl_rub_realistic REAL,
     bars_held INTEGER NOT NULL DEFAULT 0,
     created_at TEXT,
     updated_at TEXT
 )
 """
+
+
+def _col(row, name):
+    """Read a column that may not exist in an older journal row."""
+    try:
+        return row[name]
+    except (IndexError, KeyError):
+        return None
 
 
 def _now_utc_str() -> str:
@@ -83,10 +94,23 @@ class PairsRepository:
         conn.row_factory = sqlite3.Row
         return conn
 
+    #: Columns added after the first deployment. Existing sandbox/paper DBs
+    #: predate the realistic-fill metric, so they are added in place rather than
+    #: requiring the journal to be thrown away.
+    _ADDED_COLUMNS = (
+        ("pref_exit_market_fill", "REAL"),
+        ("ord_exit_market_fill", "REAL"),
+        ("pnl_rub_realistic", "REAL"),
+    )
+
     def init_db(self) -> None:
         with self._connect() as conn:
             conn.execute(_STATE_DDL)
             conn.execute(_TRADES_DDL)
+            existing = {r["name"] for r in conn.execute("PRAGMA table_info(pairs_trades)")}
+            for name, decl in self._ADDED_COLUMNS:
+                if name not in existing:
+                    conn.execute(f"ALTER TABLE pairs_trades ADD COLUMN {name} {decl}")
             conn.commit()
 
     # ── State cursor ──────────────────────────────────────────────────────────
@@ -121,9 +145,13 @@ class PairsRepository:
     # ── Trades ────────────────────────────────────────────────────────────────
     def get_open_trade(self, pair_name: str) -> Optional[PairPaperTrade]:
         with self._connect() as conn:
+            # PENDING_EXIT is still a HELD position — the exit has signalled but
+            # not filled. Excluding it here would hide the position and let the
+            # engine open a second one on top of it.
             row = conn.execute(
-                "SELECT * FROM pairs_trades WHERE pair_name = ? AND status = ? LIMIT 1",
-                (pair_name, PairTradeStatus.OPEN.value),
+                "SELECT * FROM pairs_trades WHERE pair_name = ? AND status IN (?, ?) "
+                "ORDER BY entry_timestamp LIMIT 1",
+                (pair_name, PairTradeStatus.OPEN.value, PairTradeStatus.PENDING_EXIT.value),
             ).fetchone()
         return self._row_to_trade(row) if row else None
 
@@ -137,8 +165,9 @@ class PairsRepository:
                     notional_per_leg, cost_bps_per_leg_side, status,
                     pref_market_fill, ord_market_fill, exit_timestamp, exit_z,
                     pref_exit_price, ord_exit_price, exit_reason, pnl_rub, pnl_rub_market,
+                    pref_exit_market_fill, ord_exit_market_fill, pnl_rub_realistic,
                     bars_held, created_at, updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     t.trade_id, t.experiment_name, t.pair_name, t.pref_ticker, t.ord_ticker,
                     t.direction, _dt_to_str(t.entry_timestamp), t.entry_z,
@@ -149,7 +178,9 @@ class PairsRepository:
                     _dt_to_str(t.exit_timestamp), t.exit_z,
                     t.pref_exit_price, t.ord_exit_price,
                     t.exit_reason.value if t.exit_reason and hasattr(t.exit_reason, "value") else t.exit_reason,
-                    t.pnl_rub, t.pnl_rub_market, t.bars_held, now, now,
+                    t.pnl_rub, t.pnl_rub_market,
+                    t.pref_exit_market_fill, t.ord_exit_market_fill, t.pnl_rub_realistic,
+                    t.bars_held, now, now,
                 ),
             )
             conn.commit()
@@ -161,7 +192,9 @@ class PairsRepository:
                 """UPDATE pairs_trades SET
                    status=?, pref_market_fill=?, ord_market_fill=?,
                    exit_timestamp=?, exit_z=?, pref_exit_price=?, ord_exit_price=?,
-                   exit_reason=?, pnl_rub=?, pnl_rub_market=?, bars_held=?, updated_at=?
+                   exit_reason=?, pnl_rub=?, pnl_rub_market=?,
+                   pref_exit_market_fill=?, ord_exit_market_fill=?, pnl_rub_realistic=?,
+                   bars_held=?, updated_at=?
                    WHERE trade_id=?""",
                 (
                     t.status.value if hasattr(t.status, "value") else t.status,
@@ -169,7 +202,9 @@ class PairsRepository:
                     _dt_to_str(t.exit_timestamp), t.exit_z,
                     t.pref_exit_price, t.ord_exit_price,
                     t.exit_reason.value if t.exit_reason and hasattr(t.exit_reason, "value") else t.exit_reason,
-                    t.pnl_rub, t.pnl_rub_market, t.bars_held, now, t.trade_id,
+                    t.pnl_rub, t.pnl_rub_market,
+                    t.pref_exit_market_fill, t.ord_exit_market_fill, t.pnl_rub_realistic,
+                    t.bars_held, now, t.trade_id,
                 ),
             )
             conn.commit()
@@ -196,6 +231,7 @@ class PairsRepository:
             "notional_per_leg", "cost_bps_per_leg_side", "status",
             "pref_market_fill", "ord_market_fill", "exit_timestamp", "exit_z",
             "pref_exit_price", "ord_exit_price", "exit_reason", "pnl_rub", "pnl_rub_market",
+            "pref_exit_market_fill", "ord_exit_market_fill", "pnl_rub_realistic",
             "bars_held", "created_at", "updated_at",
         ]
         with open(path, "w", newline="", encoding="utf-8") as f:
@@ -216,6 +252,9 @@ class PairsRepository:
                     "pref_exit_price": t.pref_exit_price, "ord_exit_price": t.ord_exit_price,
                     "exit_reason": t.exit_reason.value if t.exit_reason and hasattr(t.exit_reason, "value") else t.exit_reason,
                     "pnl_rub": t.pnl_rub, "pnl_rub_market": t.pnl_rub_market,
+                    "pref_exit_market_fill": t.pref_exit_market_fill,
+                    "ord_exit_market_fill": t.ord_exit_market_fill,
+                    "pnl_rub_realistic": t.pnl_rub_realistic,
                     "bars_held": t.bars_held,
                     "created_at": _dt_to_str(t.created_at), "updated_at": _dt_to_str(t.updated_at),
                 })
@@ -251,6 +290,9 @@ class PairsRepository:
             exit_reason=exit_reason,
             pnl_rub=row["pnl_rub"],
             pnl_rub_market=row["pnl_rub_market"],
+            pref_exit_market_fill=_col(row, "pref_exit_market_fill"),
+            ord_exit_market_fill=_col(row, "ord_exit_market_fill"),
+            pnl_rub_realistic=_col(row, "pnl_rub_realistic"),
             bars_held=row["bars_held"] or 0,
             created_at=_str_to_dt(row["created_at"]),
             updated_at=_str_to_dt(row["updated_at"]),

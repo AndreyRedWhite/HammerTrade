@@ -56,6 +56,12 @@ def _parse_args() -> argparse.Namespace:
                    help="Enter when expected carry (bp/day) exceeds this")
     p.add_argument("--exit-carry-bp", type=float, default=0.0,
                    help="Exit when expected carry (bp/day) falls below this")
+    p.add_argument("--roundtrip-cost-bps", type=float, default=10.0,
+                   help="Expected full-cycle commission+spread cost in bps")
+    p.add_argument("--expected-hold-days", type=float, default=10.0,
+                   help="Conservative holding horizon used by the entry cost gate")
+    p.add_argument("--min-cost-cover-multiple", type=float, default=2.0,
+                   help="Projected carry must cover round-trip cost by this multiple")
     p.add_argument("--roll-dte", type=int, default=7,
                    help="Roll the quarterly leg when days-to-expiry < this")
     p.add_argument("--min-front-dte", type=int, default=10,
@@ -128,6 +134,14 @@ def expected_carry_bp(funding_ma: float, perp_px: float, q_px: float, dte: int) 
     """bp/day to SHORT perp + LONG quarterly: funding received − basis decay paid."""
     basis_bp = (q_px / perp_px - 1) * 1e4
     return funding_ma - basis_bp / max(dte, 1)
+
+
+def required_daily_carry(roundtrip_cost_bps: float, expected_hold_days: float,
+                         cover_multiple: float) -> float:
+    """Minimum bp/day needed to cover full-cycle costs with a safety margin."""
+    if roundtrip_cost_bps < 0 or expected_hold_days <= 0 or cover_multiple < 1:
+        raise ValueError("invalid carry cost-gate parameters")
+    return roundtrip_cost_bps * cover_multiple / expected_hold_days
 
 
 def pick_front(contracts: list[dict], now_utc: datetime, min_dte: int) -> Optional[dict]:
@@ -242,6 +256,13 @@ class CarryDB:
             r = self.con.execute("SELECT * FROM daily_risk WHERE date_msk=?", (date_msk,)).fetchone()
         return r
 
+    def set_pause(self, date_msk: str, paused: bool, reason: str = ""):
+        self.daily(date_msk)  # ensure the row exists
+        self.con.execute(
+            "UPDATE daily_risk SET paused=?, pause_reason=? WHERE date_msk=?",
+            (1 if paused else 0, reason, date_msk))
+        self.con.commit()
+
     def bump_actions(self, date_msk: str):
         self.con.execute("UPDATE daily_risk SET actions_today=actions_today+1 WHERE date_msk=?",
                          (date_msk,))
@@ -346,33 +367,75 @@ def _open_construction(broker, account_id, db, logger, dry_run, *, asset, perp, 
     return t
 
 
+def _verify_flat(broker, account_id, uids, dry_run) -> tuple[bool, dict]:
+    """Read the ACCOUNT and report whether every uid is flat.
+
+    An order response says what the exchange did with one request; only a
+    position read says what the account holds. Closing on the former is how a
+    trade got marked CLOSED with a zero-lot fill while both legs were still on.
+    """
+    if dry_run:
+        return True, {}
+    held = {}
+    for p in broker.get_positions(account_id):
+        if p.instrument_uid in uids and int(p.balance) != 0:
+            held[p.instrument_uid] = int(p.balance)
+    return (not held), held
+
+
 def _close_construction(broker, account_id, db, logger, dry_run, *, t, perp_uid, q_uid,
                         perp_px, q_px, carry_bp, ts, reason):
     try:
-        pf, pc, _ = _order(broker, account_id, perp_uid, t["perp_lots"], "BUY", t["perp_pv"],
-                           dry_run, logger, f"{t['asset']}/EXIT/perp", dry_px=perp_px)
+        pf, pc, pfl = _order(broker, account_id, perp_uid, t["perp_lots"], "BUY", t["perp_pv"],
+                             dry_run, logger, f"{t['asset']}/EXIT/perp", dry_px=perp_px)
     except Exception as e:
         # nothing changed — still fully hedged; retry the exit next cycle
         logger.error(f"EXIT_LEG1_ERROR {t['asset']}: {e}; exit postponed")
         db.event(t["asset"], "EXIT_RETRY", f"perp order error: {str(e)[:200]}")
         return None
     try:
-        qf, qc, _ = _order(broker, account_id, q_uid, t["q_lots"], "SELL", t["q_pv"],
-                           dry_run, logger, f"{t['asset']}/EXIT/q", dry_px=q_px)
+        qf, qc, qfl = _order(broker, account_id, q_uid, t["q_lots"], "SELL", t["q_pv"],
+                             dry_run, logger, f"{t['asset']}/EXIT/q", dry_px=q_px)
     except Exception:
         logger.exception(f"EXIT_LEG2_ERROR {t['asset']}; retrying q leg once")
         time.sleep(2.0)
         try:
-            qf, qc, _ = _order(broker, account_id, q_uid, t["q_lots"], "SELL", t["q_pv"],
-                               dry_run, logger, f"{t['asset']}/EXIT/q-retry", dry_px=q_px)
+            qf, qc, qfl = _order(broker, account_id, q_uid, t["q_lots"], "SELL", t["q_pv"],
+                                 dry_run, logger, f"{t['asset']}/EXIT/q-retry", dry_px=q_px)
         except Exception as e:
             # perp is closed, quarterly still long: reconcile will halt this asset
             logger.critical(f"EXIT_ONELEG {t['asset']}: q leg unsold ({e}); "
                             f"trade left OPEN for reconcile halt")
             db.event(t["asset"], "EXIT_ONELEG", f"q order error: {str(e)[:200]}")
             return None
-    perp_exit = pf if pf is not None else perp_px
-    q_exit = qf if qf is not None else q_px
+    # ── Invariant: CLOSED requires the BROKER to confirm both legs are flat ──
+    # Previously this function substituted the bar price when a leg did not fill
+    # (`pf if pf is not None else perp_px`) and then wrote status=CLOSED
+    # unconditionally, so a zero-lot exit produced a closed, profitable-looking
+    # trade with both legs still on the account.
+    flat, held = _verify_flat(broker, account_id, {perp_uid, q_uid}, dry_run)
+    if not flat:
+        logger.critical(
+            f"EXIT_NOT_FLAT {t['asset']} reason={reason} broker still holds {held} "
+            f"(perp filled={pfl}/{t['perp_lots']}, q filled={qfl}/{t['q_lots']}); "
+            f"trade stays OPEN, no PnL booked, entries blocked until resolved")
+        db.event(t["asset"], "EXIT_INCOMPLETE",
+                 f"reason={reason} held={held} perp={pfl}/{t['perp_lots']} "
+                 f"q={qfl}/{t['q_lots']}")
+        db.set_pause(_today_msk(), True, f"exit_incomplete {held}")
+        return None
+
+    if pf is None or qf is None:
+        # Flat, but we never learned a fill price — cannot compute honest PnL.
+        logger.error(
+            f"EXIT_NO_FILL_PRICE {t['asset']}: legs are flat but a fill price is "
+            f"missing (perp={pf}, q={qf}); refusing to invent one")
+        db.event(t["asset"], "EXIT_NO_FILL_PRICE", f"perp={pf} q={qf}")
+        db.set_pause(_today_msk(), True, "exit without a fill price")
+        return None
+
+    perp_exit = pf
+    q_exit = qf
     # SHORT perp + LONG quarterly
     perp_pnl = (t["perp_entry_pts"] - perp_exit) * t["perp_pv"] * t["perp_lots"]
     q_pnl = (q_exit - t["q_entry_pts"]) * t["q_pv"] * t["q_lots"]
@@ -474,6 +537,10 @@ def _process_asset(args, broker, account_id, db, logger, asset, legs, now_utc, d
         return {"asset": asset, "status": "NO_FUNDING_HISTORY"}
     dte = (front["expiry"] - now_utc).days
     carry = expected_carry_bp(fma, perp_px, q_px, dte)
+    cost_gate = required_daily_carry(
+        args.roundtrip_cost_bps, args.expected_hold_days, args.min_cost_cover_multiple
+    )
+    entry_gate = max(args.entry_carry_bp, cost_gate)
 
     open_t = db.open_trade(asset)
     open_t = dict(open_t) if open_t is not None else None
@@ -511,7 +578,7 @@ def _process_asset(args, broker, account_id, db, logger, asset, legs, now_utc, d
 
     if open_t is None:
         if not daily["paused"] and daily["actions_today"] < args.max_actions_per_day \
-                and carry >= args.entry_carry_bp:
+                and carry >= entry_gate:
             t = _open_construction(broker, account_id, db, logger, dry_run, asset=asset,
                                    perp=perp, front=front, perp_px=perp_px, q_px=q_px,
                                    carry_bp=carry, notional=args.notional, ts=ts)
@@ -524,22 +591,34 @@ def _process_asset(args, broker, account_id, db, logger, asset, legs, now_utc, d
         for q in legs["quarterlies"]:
             if q["ticker"] == open_t["q_ticker"]:
                 held_dte = (q["expiry"] - now_utc).days
+
+        # The exit decision must be made on the contract we ACTUALLY HOLD.
+        # `carry` above is computed against the current front, which after a roll
+        # is a different instrument with a different basis and DTE — so a sign
+        # change in a contract we do not own could close the one we do.
+        q_held_px = iss_last_price(open_t["q_ticker"]) or q_px
+        if held_dte is not None:
+            held_carry = expected_carry_bp(fma, perp_px, q_held_px, held_dte)
+        else:
+            held_carry = carry
+            logger.warning(f"HELD_DTE_UNKNOWN {asset} {open_t['q_ticker']}: "
+                           f"falling back to front carry for the exit decision")
+
         reason = None
-        if carry <= args.exit_carry_bp:
+        if held_carry <= args.exit_carry_bp:
             reason = "CARRY_FLIP"
         elif held_dte is not None and held_dte < args.roll_dte:
             reason = "ROLL"
         if reason and daily["actions_today"] < args.max_actions_per_day:
-            q_held_px = iss_last_price(open_t["q_ticker"]) or q_px
             _close_construction(broker, account_id, db, logger, dry_run, t=open_t,
                                 perp_uid=perp["uid"], q_uid=held_front_uid,
-                                perp_px=perp_px, q_px=q_held_px, carry_bp=carry,
+                                perp_px=perp_px, q_px=q_held_px, carry_bp=held_carry,
                                 ts=ts, reason=reason)
             db.bump_actions(date_msk)
             open_t = None
             # ROLL re-enters immediately on the new front (next cycle would too,
             # but do it now to avoid an unhedged gap in carry accrual)
-            if reason == "ROLL" and carry >= args.entry_carry_bp \
+            if reason == "ROLL" and carry >= entry_gate \
                     and db.daily(date_msk)["actions_today"] < args.max_actions_per_day:
                 t = _open_construction(broker, account_id, db, logger, dry_run, asset=asset,
                                        perp=perp, front=front, perp_px=perp_px, q_px=q_px,
@@ -549,6 +628,7 @@ def _process_asset(args, broker, account_id, db, logger, asset, legs, now_utc, d
                     open_t = t
 
     return {"asset": asset, "status": "OK", "carry_bp": round(carry, 2),
+            "entry_gate_bp": round(entry_gate, 2),
             "funding_ma_bp": round(fma, 2), "dte": dte, "front": front["ticker"],
             "has_open": open_t is not None}
 
@@ -558,6 +638,29 @@ def _uid_by_ticker(legs: dict, ticker: str) -> Optional[str]:
         if q["ticker"] == ticker:
             return q["uid"]
     return legs["perp"]["uid"] if legs["perp"]["ticker"] == ticker else None
+
+
+# ───────────────────────── contractual cashflows we cannot see ───────────────
+#: Perpetuals on a PRICE index carry a dividend adjustment in addition to
+#: funding. MOEX credits it to longs and DEBITS it from shorts, and this
+#: construction is short the perpetual — so it is an obligation, not income.
+#: Verified 2026-09: IMOEXF tracks the IMOEX price index to within ~5 bps
+#: (2024-01..2026-09: perp -28.0% vs IMOEX -28.0%, while total-return MCFTRR was
+#: -11.7%), and the ISS history endpoint used here returns no such column.
+#: Omitting it inflates computed carry by roughly the index dividend yield:
+#: 3.16 bp/day over 2023-2026 and 4.05 bp/day in 2026, against an entry gate of
+#: 2.00 bp/day. On the 2026 regime that turns a claimed +2.51 into about -1.54.
+INDEX_PERPETUALS_WITH_DIVIDEND_ADJUSTMENT = {"IMOEXF"}
+
+
+def _missing_cashflows(legs_spec: str) -> list[str]:
+    """Contractual cashflows known to be unobservable for the configured legs."""
+    missing = []
+    for tok in legs_spec.split(","):
+        perp = tok.strip().split(":")[0].strip()
+        if perp in INDEX_PERPETUALS_WITH_DIVIDEND_ADJUSTMENT:
+            missing.append(f"{perp}:INDEX_DIV")
+    return missing
 
 
 # ───────────────────────── status ─────────────────────────
@@ -571,14 +674,29 @@ def _write_status(args, db, results, market_open, session, fetch_status, account
         "account_id": account_id, "pairs": args.legs,
         "params": {"notional": args.notional, "funding_ma_days": args.funding_ma_days,
                    "entry_carry_bp": args.entry_carry_bp, "exit_carry_bp": args.exit_carry_bp,
-                   "roll_dte": args.roll_dte},
+                   "roll_dte": args.roll_dte, "roundtrip_cost_bps": args.roundtrip_cost_bps,
+                   "expected_hold_days": args.expected_hold_days,
+                   "min_cost_cover_multiple": args.min_cost_cover_multiple},
         "market_open": market_open, "session": session, "fetch_status": fetch_status,
         "per_asset": results,
         "open_trades_total": len(db.all_open()), "closed_trades_total": len(closed),
-        "funding_accrued_rub_REAL": round(funding, 1),
+        # ── REAL vs MODEL ────────────────────────────────────────────────────
+        # Only fills and commissions are broker-confirmed. Funding is OUR figure,
+        # derived from ISS SWAPRATE; the sandbox does not settle it to us. It was
+        # previously published as `funding_accrued_rub_REAL` and summed into
+        # `net_pnl_rub_REAL`, which is the same mislabelling that produced a false
+        # ADVANCE verdict once before.
         "price_pnl_rub_REAL": round(price_pnl, 1),
-        "net_pnl_rub_REAL": round(price_pnl + funding, 1),
         "commission_rub_REAL": round(comm, 1),
+        "net_pnl_rub_REAL": round(price_pnl, 1),
+        "funding_accrued_rub_MODEL": round(funding, 1),
+        "net_pnl_rub_WITH_MODEL": round(price_pnl + funding, 1),
+        # Known contractual cashflows this ledger cannot observe. For an index
+        # perpetual MOEX debits a dividend adjustment (IndexDiv) from the SHORT
+        # leg, and the ISS history endpoint used here exposes SWAPRATE only. Any
+        # IMOEXF PnL below is therefore INCOMPLETE, not merely approximate.
+        "missing_cashflows": _missing_cashflows(args.legs),
+        "pnl_is_complete": not _missing_cashflows(args.legs),
         "pid": os.getpid(),
         "updated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
@@ -610,9 +728,35 @@ def main():
     logger.info("Perp Funding-Carry SANDBOX Trader — SANDBOX contour (virtual money)")
     logger.info(f"  legs={args.legs} notional={args.notional} dry_run={dry_run}")
     logger.info(f"  funding_ma={args.funding_ma_days}d entry>{args.entry_carry_bp}bp "
-                f"exit<{args.exit_carry_bp}bp roll_dte={args.roll_dte}")
+                f"exit<{args.exit_carry_bp}bp roll_dte={args.roll_dte} "
+                f"cost_gate={required_daily_carry(args.roundtrip_cost_bps, args.expected_hold_days, args.min_cost_cover_multiple):.2f}bp/day")
     logger.info("=" * 60)
 
+    # The entry gate divides the round trip by --expected-hold-days, but the hold
+    # is bounded by --min-front-dte and --roll-dte. If those contradict, the gate
+    # understates the requirement and the service happily trades below its own
+    # break-even. Refuse to start rather than discover it in a report.
+    from src.carry import front_selection_is_consistent
+    ok, detail = front_selection_is_consistent(
+        min_front_dte=args.min_front_dte,
+        roll_dte=args.roll_dte,
+        expected_hold_days=args.expected_hold_days,
+    )
+    if not ok:
+        raise SystemExit(f"inconsistent carry horizon: {detail}")
+    logger.info(f"  horizon check: {detail}")
+
+    missing = _missing_cashflows(args.legs)
+    if missing:
+        logger.warning(
+            f"INCOMPLETE_PNL: these legs carry contractual cashflows this daemon "
+            f"cannot observe: {missing}. Reported PnL is INCOMPLETE — for an index "
+            f"perpetual the exchange debits a dividend adjustment from the SHORT "
+            f"leg, worth roughly the index dividend yield (~3-4 bp/day), which is "
+            f"larger than the entry gate. Do not treat these numbers as an edge.")
+
+    if os.getenv("TINVEST_LIVE_TRADING_TOKEN"):
+        raise SystemExit("live trading token present — refusing to run sandbox executor")
     if not dry_run:
         if not os.getenv("SANDBOX_TOKEN"):
             raise SystemExit("SANDBOX_TOKEN missing — refusing to place sandbox orders.")

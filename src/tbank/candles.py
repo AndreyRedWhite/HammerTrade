@@ -90,7 +90,21 @@ def _candle_to_row(candle) -> dict:
 _MAX_RETRIES = 3
 
 
-def _fetch_chunk_with_retry(client, instrument_uid, chunk_start, chunk_end, interval, all_rows):
+class IncompleteCandleHistory(RuntimeError):
+    """A chunk of history could not be fetched, so the series has a hole.
+
+    This is an error rather than a warning because nothing downstream can detect
+    it. A gapped series is indistinguishable from a complete one: rolling means,
+    z-scores and bar counts all compute happily over whatever arrived. For a pair
+    the damage compounds — the two legs are fetched separately and inner-joined,
+    so the z-window silently becomes "the last N timestamps both legs happened to
+    return" rather than N market intervals, and a fetch failure during a stressed
+    session preferentially removes exactly the bars that matter.
+    """
+
+
+def _fetch_chunk_with_retry(client, instrument_uid, chunk_start, chunk_end, interval,
+                            all_rows, *, strict: bool = True):
     for attempt in range(_MAX_RETRIES + 1):
         try:
             resp = client.market_data.get_candles(
@@ -113,10 +127,11 @@ def _fetch_chunk_with_retry(client, instrument_uid, chunk_start, chunk_end, inte
                 )
                 time.sleep(wait)
                 continue
-            warnings.warn(
-                f"Failed to fetch chunk "
-                f"{chunk_start.isoformat()} - {chunk_end.isoformat()}: {e}"
-            )
+            msg = (f"Failed to fetch chunk {chunk_start.isoformat()} - "
+                   f"{chunk_end.isoformat()} for {instrument_uid}: {e}")
+            if strict:
+                raise IncompleteCandleHistory(msg) from e
+            warnings.warn(msg + " [strict=False: continuing with a GAP in the series]")
             return
 
 
@@ -126,7 +141,16 @@ def fetch_historical_candles(
     start: datetime,
     end: datetime,
     timeframe: str,
+    *,
+    strict: bool = True,
 ) -> pd.DataFrame:
+    """Fetch candles, failing loudly on an incomplete series.
+
+    ``strict=True`` (the default) raises ``IncompleteCandleHistory`` if any chunk
+    could not be fetched. Pass ``strict=False`` only for exploratory work where a
+    hole is acceptable and visible to the person looking at the output — never
+    for a trading decision or a backtest whose numbers will be quoted.
+    """
     try:
         from t_tech.invest import CandleInterval
     except ImportError:
@@ -144,7 +168,8 @@ def fetch_historical_candles(
 
     for chunk_start, chunk_end in chunks:
         _fetch_chunk_with_retry(
-            client, instrument_uid, chunk_start, chunk_end, interval, all_rows
+            client, instrument_uid, chunk_start, chunk_end, interval, all_rows,
+            strict=strict,
         )
 
     if not all_rows:

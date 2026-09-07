@@ -23,6 +23,17 @@ def test_expected_carry_subtracts_basis_decay():
     assert abs(carry - 6.0) < 0.01
 
 
+def test_required_daily_carry_has_cost_margin():
+    # 10bp full cycle, require 2x cover over a conservative 10-day hold.
+    assert ct.required_daily_carry(10, 10, 2) == 2.0
+
+
+def test_required_daily_carry_rejects_invalid_horizon():
+    import pytest
+    with pytest.raises(ValueError):
+        ct.required_daily_carry(10, 0, 2)
+
+
 def test_pick_front_respects_min_dte():
     contracts = [
         {"ticker": "MMU6", "expiry": NOW + timedelta(days=5)},
@@ -87,3 +98,119 @@ def test_dashboard_query_shape_matches_fleet(tmp_path):
         "SELECT direction, net_pnl_rub AS pnl, exit_ts AS ets, status FROM carry_trades"
     ).fetchall()
     assert rows[0]["pnl"] == 55.0 and rows[0]["direction"] == "NEUTRAL"
+
+
+# ─── The phantom close: an exit must be confirmed by the ACCOUNT ─────────────
+
+class _FakeBroker:
+    """Minimal broker double. `positions` is {uid: signed balance}."""
+
+    def __init__(self, positions, fill_lots=None, fill_total_rub=None):
+        self._positions = dict(positions)
+        self._fill_lots = fill_lots
+        self._fill_total_rub = fill_total_rub
+
+    def get_positions(self, account_id):
+        class _P:
+            def __init__(self, uid, bal):
+                self.instrument_uid = uid
+                self.figi = uid
+                self.balance = bal
+        return [_P(u, b) for u, b in self._positions.items()]
+
+    def post_order(self, **kw):
+        class _R:
+            pass
+        r = _R()
+        r.order_id = "fake"
+        r.status = "EXECUTION_REPORT_STATUS_FILL"
+        r.lots_executed = self._fill_lots if self._fill_lots is not None else kw["quantity_lots"]
+        r.executed_price = self._fill_total_rub
+        r.commission_rub = 0.0
+        return r
+
+
+def _open_trade_row():
+    return {
+        "trade_id": "sbcarry:GLDRUBF:t0", "asset": "GLDRUBF", "status": "OPEN",
+        "perp_ticker": "GLDRUBF", "q_ticker": "GLZ6",
+        "perp_lots": 2, "q_lots": 2, "perp_pv": 1.0, "q_pv": 1.0,
+        "perp_entry_pts": 12000.0, "q_entry_pts": 12500.0,
+        "commission_rub": 0.0, "funding_rub": 0.0,
+    }
+
+
+def test_verify_flat_reports_remaining_legs():
+    broker = _FakeBroker({"uid-perp": -2, "uid-q": 0})
+    flat, held = ct._verify_flat(broker, "acct", {"uid-perp", "uid-q"}, dry_run=False)
+    assert flat is False
+    assert held == {"uid-perp": -2}
+
+
+def test_verify_flat_true_when_account_is_empty():
+    broker = _FakeBroker({"uid-perp": 0, "uid-q": 0})
+    flat, held = ct._verify_flat(broker, "acct", {"uid-perp", "uid-q"}, dry_run=False)
+    assert flat is True and held == {}
+
+
+def test_close_refuses_when_the_broker_still_holds_a_leg(tmp_path, caplog):
+    """THE bug: a zero-lot exit used to book a bar-price PnL and write CLOSED.
+
+    Here the orders report fills but the ACCOUNT still shows the perp leg, so the
+    close must be refused, the trade left OPEN and trading paused.
+    """
+    db = ct.CarryDB(str(tmp_path / "c.sqlite"))
+    t = _open_trade_row()
+    db.upsert_trade(dict(t, direction="NEUTRAL", entry_ts="2026-09-07T10:00:00+00:00",
+                         created_at="x", updated_at="x"))
+    broker = _FakeBroker({"uid-perp": -2, "uid-q": 0}, fill_total_rub=24000.0)
+
+    import logging
+    logger = logging.getLogger("t1")
+    out = ct._close_construction(
+        broker, "acct", db, logger, False, t=t,
+        perp_uid="uid-perp", q_uid="uid-q",
+        perp_px=12000.0, q_px=12500.0, carry_bp=0.0,
+        ts="2026-09-07T12:00:00+00:00", reason="CARRY_FLIP")
+
+    assert out is None                                    # no close reported
+    assert db.open_trade("GLDRUBF") is not None           # still open
+    assert db.daily(ct._today_msk())["paused"] == 1       # entries blocked
+    db.con.close()
+
+
+def test_close_succeeds_when_the_account_is_confirmed_flat(tmp_path):
+    db = ct.CarryDB(str(tmp_path / "c.sqlite"))
+    t = _open_trade_row()
+    db.upsert_trade(dict(t, direction="NEUTRAL", entry_ts="2026-09-07T10:00:00+00:00",
+                         created_at="x", updated_at="x"))
+    # 2 lots at 11900 and 12450 -> executed_order_price is the TOTAL in RUB.
+    broker = _FakeBroker({"uid-perp": 0, "uid-q": 0}, fill_total_rub=23800.0)
+
+    import logging
+    out = ct._close_construction(
+        broker, "acct", db, logging.getLogger("t2"), False, t=t,
+        perp_uid="uid-perp", q_uid="uid-q",
+        perp_px=12000.0, q_px=12500.0, carry_bp=0.0,
+        ts="2026-09-07T12:00:00+00:00", reason="CARRY_FLIP")
+
+    assert out is not None
+    assert out["status"] == "CLOSED"
+    assert db.daily(ct._today_msk())["paused"] == 0
+    db.con.close()
+
+
+# ─── Contractual cashflows we know we cannot observe ─────────────────────────
+
+def test_index_perpetual_declares_its_missing_dividend_adjustment():
+    """IMOEXF debits IndexDiv from the short leg; ISS history has no such column."""
+    assert ct._missing_cashflows("IMOEXF:MM") == ["IMOEXF:INDEX_DIV"]
+
+
+def test_gold_has_no_dividend_adjustment():
+    """The verdict is instrument-specific: gold pays no dividend."""
+    assert ct._missing_cashflows("GLDRUBF:GL") == []
+
+
+def test_mixed_legs_report_only_the_affected_instrument():
+    assert ct._missing_cashflows("IMOEXF:MM,GLDRUBF:GL") == ["IMOEXF:INDEX_DIV"]

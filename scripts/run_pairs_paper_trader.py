@@ -42,6 +42,11 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--entry-z", type=float, default=2.0)
     p.add_argument("--exit-z", type=float, default=0.5)
     p.add_argument("--stop-z", type=float, default=4.0)
+    p.add_argument("--hedge-window", type=int, default=None,
+                   help="Rolling hedge-ratio window; omitted preserves 1:1 spread")
+    p.add_argument("--min-correlation", type=float, default=None)
+    p.add_argument("--max-beta-change", type=float, default=None,
+                   help="Max relative beta change over hedge_window/4 bars")
     p.add_argument("--stop-loss-bps", type=float, default=None,
                    help="Hard stop on unrealized loss, in bps of ONE leg's notional "
                         "(300 = 3%% = 3000 RUB at 100k/leg). --stop-z cannot bound the "
@@ -124,7 +129,11 @@ def _process_pair(args, repo, logger, pref, ordn, now_utc) -> dict:
         return {"pair": pair_name, "status": "NO_CANDLES"}
 
     # fetched bars are already at bar-timeframe → no further resample
-    pair_df = compute_spread_z(pref_df, ord_df, timeframe="1min", z_window=args.z_window)
+    pair_df = compute_spread_z(
+        pref_df, ord_df, timeframe="1min", z_window=args.z_window,
+        hedge_window=args.hedge_window, min_correlation=args.min_correlation,
+        max_beta_change=args.max_beta_change,
+    )
     pair_df = _closed_bars(pair_df, _bar_minutes(args.bar_timeframe), now_utc)
     if pair_df.empty:
         return {"pair": pair_name, "status": "NO_CLOSED_BARS"}
@@ -169,13 +178,22 @@ def _write_status(args, repo, pair_results, market_open, session, fetch_status):
     closed = [t for t in repo.list_all_trades() if t.status == PairTradeStatus.CLOSED]
     net_theo = sum(t.pnl_rub or 0.0 for t in closed)
     net_mkt = sum(t.pnl_rub_market for t in closed if t.pnl_rub_market is not None)
-    open_trades = [t for t in repo.list_all_trades() if t.status == PairTradeStatus.OPEN]
+    # The only figure that prices BOTH ends at a tradeable price. Reported
+    # alongside the weaker two so the gap between them stays visible.
+    net_real = sum(t.pnl_rub_realistic for t in closed if t.pnl_rub_realistic is not None)
+    n_real = sum(1 for t in closed if t.pnl_rub_realistic is not None)
+    # PENDING_EXIT is still a held position, so it counts as open here.
+    open_trades = [t for t in repo.list_all_trades()
+                   if t.status in (PairTradeStatus.OPEN, PairTradeStatus.PENDING_EXIT)]
     status = {
         "strategy": "pairs_statarb",
         "experiment_name": args.experiment_name,
         "pairs": args.pairs,
         "params": {"z_window": args.z_window, "entry_z": args.entry_z,
                    "exit_z": args.exit_z, "stop_z": args.stop_z,
+                   "hedge_window": args.hedge_window,
+                   "min_correlation": args.min_correlation,
+                   "max_beta_change": args.max_beta_change,
                    "max_hold_bars": args.max_hold_bars,
                    "bar_timeframe": args.bar_timeframe,
                    "cost_bps_per_leg_side": args.cost_bps_per_leg_side},
@@ -187,6 +205,9 @@ def _write_status(args, repo, pair_results, market_open, session, fetch_status):
         "closed_trades_total": len(closed),
         "net_pnl_theoretical_rub": round(net_theo, 1),
         "net_pnl_market_rub": round(net_mkt, 1),
+        # The one a funnel verdict may use.
+        "net_pnl_realistic_rub": round(net_real, 1),
+        "trades_with_realistic_pnl": n_real,
         "pid": os.getpid(),
         "updated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }

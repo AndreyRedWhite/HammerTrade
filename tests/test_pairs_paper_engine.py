@@ -61,10 +61,22 @@ def test_exit_on_mean_reversion():
     # next bar reverts to |z| <= exit_z → EXIT_MEAN
     trade2, logs = process_pair_bar(_bar("2026-06-01T11:00", 0.3, 301, 301, 299, 299),
                                     trade, **COMMON)
-    assert trade2.status == PairTradeStatus.CLOSED
+    # The exit SIGNALS here but cannot FILL here — the close that produced the
+    # signal is only knowable after the bar is over.
+    assert trade2.status == PairTradeStatus.PENDING_EXIT
     assert trade2.exit_reason == PairExitReason.EXIT_MEAN
     assert trade2.pnl_rub is not None
     assert trade2.pnl_rub_market is not None
+    assert trade2.pnl_rub_realistic is None
+
+    # Next bar's OPEN is the fill.
+    trade3, _ = process_pair_bar(_bar("2026-06-01T12:00", 0.2, 305, 306, 295, 294),
+                                 trade2, **COMMON)
+    assert trade3.status == PairTradeStatus.CLOSED
+    assert trade3.pref_exit_market_fill == 305
+    assert trade3.ord_exit_market_fill == 295
+    assert trade3.pnl_rub_realistic is not None
+    assert trade3.pnl_rub_realistic != trade3.pnl_rub
 
 
 def test_exit_on_stop_diverge():
@@ -72,8 +84,12 @@ def test_exit_on_stop_diverge():
                                 None, **COMMON)
     trade2, _ = process_pair_bar(_bar("2026-06-01T11:00", 4.5, 301, 301, 299, 299),
                                  trade, **COMMON)
-    assert trade2.status == PairTradeStatus.CLOSED
+    assert trade2.status == PairTradeStatus.PENDING_EXIT
     assert trade2.exit_reason == PairExitReason.STOP_DIVERGE
+    trade3, _ = process_pair_bar(_bar("2026-06-01T12:00", 4.6, 302, 302, 298, 298),
+                                 trade2, **COMMON)
+    assert trade3.status == PairTradeStatus.CLOSED
+    assert trade3.pnl_rub_realistic is not None
 
 
 def test_exit_on_time():
@@ -83,8 +99,11 @@ def test_exit_on_time():
                                 None, **common)
     trade2, _ = process_pair_bar(_bar("2026-06-01T11:00", 2.4, 301, 301, 299, 299),
                                  trade, **common)
-    assert trade2.status == PairTradeStatus.CLOSED
+    assert trade2.status == PairTradeStatus.PENDING_EXIT
     assert trade2.exit_reason == PairExitReason.TIME
+    trade3, _ = process_pair_bar(_bar("2026-06-01T12:00", 2.3, 302, 302, 298, 298),
+                                 trade2, **common)
+    assert trade3.status == PairTradeStatus.CLOSED
 
 
 def test_no_stop_loss_by_default():
@@ -109,9 +128,18 @@ def test_stop_loss_fires_when_z_stop_cannot():
     assert trade.direction == "SHORT_SPREAD"
     trade2, logs = process_pair_bar(_bar("2026-06-01T11:00", 1.70, 37.165, 36.015, 15.49, 13.65),
                                     trade, **common)
-    assert trade2.status == PairTradeStatus.CLOSED
+    assert trade2.status == PairTradeStatus.PENDING_EXIT
     assert trade2.exit_reason == PairExitReason.STOP_LOSS
     assert trade2.pnl_rub_market < -3000  # the bar gapped straight through the stop
+
+    # The realistic loss is only known once the position is actually out. The
+    # stop does not cap it at 3000: the fill is a bar later, at whatever the
+    # market opens at. That gap is the honest cost of a bar-close stop.
+    trade3, _ = process_pair_bar(_bar("2026-06-01T12:00", 1.6, 36.0, 36.0, 13.6, 13.6),
+                                 trade2, **common)
+    assert trade3.status == PairTradeStatus.CLOSED
+    assert trade3.pnl_rub_realistic is not None
+    assert trade3.pnl_rub_realistic < -3000
 
 
 def test_stop_loss_does_not_fire_on_small_loss():
@@ -170,3 +198,29 @@ def test_compute_spread_z():
     out = compute_spread_z(pref, ordn, timeframe="1min", z_window=50)
     assert "z" in out.columns and "spread" in out.columns
     assert out["z"].notna().sum() > 0
+
+
+def test_rolling_hedge_ratio_and_stability_gate():
+    n = 160
+    ts = pd.date_range("2026-01-01", periods=n, freq="h", tz="UTC")
+    x = np.linspace(4.5, 4.8, n)
+    # log(pref) = const + 1.4 * log(ord), with small deterministic noise.
+    ord_close = np.exp(x)
+    pref_close = np.exp(0.2 + 1.4 * x + np.sin(np.arange(n)) * 0.001)
+    pref = pd.DataFrame({"timestamp": ts, "open": pref_close, "high": pref_close,
+                         "low": pref_close, "close": pref_close, "volume": 1})
+    ordn = pd.DataFrame({"timestamp": ts, "open": ord_close, "high": ord_close,
+                         "low": ord_close, "close": ord_close, "volume": 1})
+    out = compute_spread_z(pref, ordn, timeframe="1min", z_window=30,
+                           hedge_window=50, min_correlation=0.9,
+                           max_beta_change=0.2)
+    assert out["beta"].dropna().iloc[-1] == pytest.approx(1.4, rel=0.03)
+    assert bool(out["entry_allowed"].iloc[-1])
+
+
+def test_unstable_pair_blocks_new_entry():
+    bar = _bar("2026-06-01T10:00", 3.0, 300, 300, 300, 300)
+    bar["entry_allowed"] = False
+    trade, logs = process_pair_bar(bar, None, **COMMON)
+    assert trade is None
+    assert any("BLOCKED" in m for m in logs)

@@ -14,6 +14,10 @@ from typing import Optional
 
 class PairTradeStatus(str, Enum):
     OPEN = "OPEN"
+    #: Exit signalled on a closed bar but not yet filled. A live trader cannot
+    #: trade the close that produced its own exit signal, so the position is
+    #: still held here and is closed at the NEXT bar's open.
+    PENDING_EXIT = "PENDING_EXIT"
     CLOSED = "CLOSED"
 
 
@@ -56,8 +60,21 @@ class PairPaperTrade:
     pref_exit_price: Optional[float] = None
     ord_exit_price: Optional[float] = None
     exit_reason: Optional[PairExitReason] = None
-    pnl_rub: Optional[float] = None             # theoretical, cost-adjusted
-    pnl_rub_market: Optional[float] = None      # entry at market fill, cost-adjusted
+    # exit market fill = first bar AFTER the exit signal, open price
+    pref_exit_market_fill: Optional[float] = None
+    ord_exit_market_fill: Optional[float] = None
+    # ── The three PnL metrics, weakest to strongest ──────────────────────────
+    #: Theoretical: entry AND exit at the signal bar's close. Both ends are
+    #: untradeable. Kept only for comparison with historical reports.
+    pnl_rub: Optional[float] = None
+    #: Entry at the next bar's open, exit STILL at the signal close. Half-fixed,
+    #: and the remaining half is one-sided in our favour.
+    pnl_rub_market: Optional[float] = None
+    #: Entry AND exit at the next bar's open. The only metric a funnel verdict
+    #: may use. Measured 2026-09: the difference between this and pnl_rub is
+    #: 4.5-22.2 bps/trade — the size of the entire claimed pairs edge — and it
+    #: flips three of four tested configurations from positive to negative.
+    pnl_rub_realistic: Optional[float] = None
     bars_held: int = 0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

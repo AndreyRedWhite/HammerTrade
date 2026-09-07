@@ -31,14 +31,26 @@ SCRIPT_FAMILY = {
     "run_orb_paper_trader.py":        ("orb", "orb_paper_trades", "pnl_rub", "exit_timestamp"),
     "run_orf_paper_trader.py":        ("orf", "orf_paper_trades", "pnl_rub", "exit_timestamp"),
     "run_vwap_reversion_paper_trader.py": ("vwap", "vwap_paper_trades", "pnl_rub", "exit_timestamp"),
-    # pnl_rub prices the entry at the signal bar close, which the fills never achieve;
-    # pnl_rub_market is the real entry fill and is NULL only when none was captured.
+    # Three PnL columns exist for pairs; the funnel must read the strongest.
+    #   pnl_rub           entry AND exit at the signal bar close — both untradeable
+    #   pnl_rub_market    entry at next open, exit STILL at the signal close
+    #   pnl_rub_realistic entry AND exit at the next bar's open
+    # Only the last one prices both ends at something a live trader could get.
+    # Measured 2026-09: the gap between pnl_rub and pnl_rub_realistic is
+    # 4.5-22.2 bps/trade and flips three of four tested pairs configurations from
+    # positive to negative — so reading the wrong column here does not shade a
+    # verdict, it inverts it. COALESCE only falls back for pre-migration rows.
     "run_pairs_paper_trader.py":      ("pairs", "pairs_trades",
-                                       "COALESCE(pnl_rub_market, pnl_rub)", "exit_timestamp"),
+                                       "COALESCE(pnl_rub_realistic, pnl_rub_market, pnl_rub)",
+                                       "exit_timestamp"),
     "run_hammer_maxhold5_sandbox.py": ("sandbox", "sandbox_trades", "net_pnl_rub", "exit_time"),
     "run_pairs_sandbox_trader.py":    ("sandbox", "pair_trades", "net_pnl_rub", "exit_ts"),
     "run_orb_sandbox_trader.py":      ("sandbox", "orb_trades", "net_pnl_rub", "exit_ts"),
     "run_carry_sandbox_trader.py":    ("sandbox", "carry_trades", "net_pnl_rub", "exit_ts"),
+    "run_volatility_breakout_sandbox_trader.py":
+        ("sandbox", "volatility_breakout_trades", "net_pnl_rub", "exit_ts"),
+    "run_xsec_momentum_sandbox_trader.py":
+        ("sandbox", "xsec_trades", "net_pnl_rub", "exit_ts"),
 }
 
 
