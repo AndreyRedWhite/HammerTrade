@@ -8,3 +8,4 @@ PyYAML
 t-tech-investments
 flask>=3.0
 waitress>=3.0
+pytz
